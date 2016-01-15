@@ -1,0 +1,16 @@
+@startuml
+scale 1050 width
+' http://plantuml.com/state.html
+title **daily states**
+
+
+[*] --> Idle
+Idle --> [*]
+Idle --> Waiting
+
+Waiting --> Idle :no car
+Waiting --> Riding
+
+Riding --> Idle
+
+@enduml
