@@ -1,6 +1,15 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath deps.kotlinPlugin
+    }
+}
+
 android {
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
@@ -33,14 +42,4 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
 }
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath deps.kotlinPlugin
-    }
-}
-repositories {
-    mavenCentral()
-}
+
