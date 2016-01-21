@@ -21,3 +21,63 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+
+ext.versions = [ // http://stackoverflow.com/a/9547593/190148
+                 compileSdk    : 23
+                 , targetSdk   : 23
+                 , minSdk      : 21
+                 , buildTools  : '23.0.2'
+                 , support     : '23.1.1'
+                 , kotlin      : '1.0.0-beta-4584'
+                 , anko        : '0.8'
+                 , dagger      : '2.0.2'
+                 , rxBinding   : '0.3.0'
+                 , rxLifecycle : '0.3.0'
+                 , fragmentArgs: '3.0.0'
+                 , autoParcel  : '0.3.1'
+                 , ormLite     : '4.48'
+                 , leakCanary  : '1.3.1'
+]
+
+ext.deps = [
+        dagger              : 'com.google.dagger:dagger:' + versions.dagger
+//        , daggerApt            : 'com.google.dagger:dagger-compiler:' + versions.dagger
+//        , jsr250               : 'javax.annotation:jsr250-api:1.0'
+//
+//        , rxJava               : 'io.reactivex:rxjava:1.0.17'
+//        , rxAndroid            : 'io.reactivex:rxandroid:1.0.1'
+//        , rxBinding            : 'com.jakewharton.rxbinding:rxbinding:' + versions.rxBinding
+//        , rxBindingV4          : 'com.jakewharton.rxbinding:rxbinding-support-v4:' + versions.rxBinding
+//        , rxBindingRecycler    : 'com.jakewharton.rxbinding:rxbinding-recyclerview-v7:' + versions.rxBinding
+//        , rxLifecycle          : 'com.trello:rxlifecycle:' + versions.rxLifecycle
+//        , rxLifecycleComponents: 'com.trello:rxlifecycle-components:' + versions.rxLifecycle
+//        , rxPreferences        : 'com.f2prateek.rx.preferences:rx-preferences:1.0.1'
+
+        , kotlin            : 'org.jetbrains.kotlin:kotlin-stdlib:' + versions.kotlin
+        , kotlinPlugin: 'org.jetbrains.kotlin:kotlin-gradle-plugin:' + versions.kotlin
+
+        , anko: 'org.jetbrains.anko:anko-sdk21:' + versions.anko
+
+        , supportAnnotations: 'com.android.support:support-annotations:' + versions.support
+        , supportAppCompat   : 'com.android.support:appcompat-v7:' + versions.support
+        , supportRecycler   : 'com.android.support:recyclerview-v7:' + versions.support
+
+        , fragmentArgs      : 'com.hannesdorfmann.fragmentargs:annotation:' + versions.fragmentArgs
+        , fragmentArgsApt   : 'com.hannesdorfmann.fragmentargs:processor:' + versions.fragmentArgs
+        , autoParcel        : 'com.github.frankiesardo:auto-parcel:' + versions.autoParcel
+        , autoParcelApt     : 'com.github.frankiesardo:auto-parcel-processor:' + versions.autoParcel
+
+        , butterknife       : 'com.jakewharton:butterknife:7.0.1'
+
+        , okHttp            : 'com.squareup.okhttp:okhttp:2.5.0'
+        , retrofit          : 'com.squareup.retrofit:retrofit:1.9.0'
+        , gson              : 'com.google.code.gson:gson:2.4'
+
+        , ormLite           : 'com.j256.ormlite:ormlite-core:' + versions.ormLite
+        , ormLiteAndroid    : 'com.j256.ormlite:ormlite-android:' + versions.ormLite
+
+        , leakCanary        : 'com.squareup.leakcanary:leakcanary-android:' + versions.leakCanary
+        , leakCanaryNoOp    : 'com.squareup.leakcanary:leakcanary-android-no-op:' + versions.leakCanary
+        , scalpel           : 'com.jakewharton.scalpel:scalpel:1.1.2'
+]
