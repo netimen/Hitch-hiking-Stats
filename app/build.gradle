@@ -30,6 +30,11 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE-FIREBASE.txt'
+        exclude 'META-INF/NOTICE'
+    }
 }
 
 dependencies {
@@ -43,6 +48,8 @@ dependencies {
 
     compile deps.rxKotlin
     compile deps.rxBinding
+
+    compile deps.firebase
 
     testCompile 'junit:junit:4.12'
 }

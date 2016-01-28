@@ -9,6 +9,10 @@ import android.view.ViewManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import com.firebase.client.DataSnapshot
+import com.firebase.client.Firebase
+import com.firebase.client.FirebaseError
+import com.firebase.client.ValueEventListener
 import com.jakewharton.rxbinding.widget.RxTextView
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
@@ -17,12 +21,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Firebase.setAndroidContext(this)
+        Firebase.getDefaultConfig().isPersistenceEnabled = true
+        val myFirebaseRef = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+        myFirebaseRef.child("rides").push().setValue(Ride(13))
+        myFirebaseRef.child("rides").addValueEventListener(object:ValueEventListener{
+            override fun onCancelled(p0: FirebaseError?) {
+                throw UnsupportedOperationException()
+            }
+
+            override fun onDataChange(p0: DataSnapshot?) {
+                toast(p0?.value.toString())
+                myFirebaseRef.child("rides").push().setValue(Ride(14))
+            }
+        })
         val ui = MainActivityUI()
         ui.setContentView(this)
         RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
 }
+
+data class Ride(val minutes: Int)
+
 
 class MainActivityUI : AnkoComponent<MainActivity> {
     lateinit var title: TextView
