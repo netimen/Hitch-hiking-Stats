@@ -16,6 +16,7 @@ import com.firebase.client.ValueEventListener
 import com.jakewharton.rxbinding.widget.RxTextView
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,16 +24,44 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Firebase.setAndroidContext(this)
         Firebase.getDefaultConfig().isPersistenceEnabled = true
-        val myFirebaseRef = Firebase("https://dazzling-heat-4079.firebaseio.com/")
-        myFirebaseRef.child("rides").push().setValue(Ride(13))
-        myFirebaseRef.child("rides").addValueEventListener(object:ValueEventListener{
+        val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+        val ridesRef = ref.child("rides")
+        ridesRef.removeValue()
+        val trip1 = "Big Trip"
+        val trip2 = "Small Trip"
+        ridesRef.push().setValue(Ride(trip1, "Toyota", 7, 15))
+        ridesRef.push().setValue(Ride(trip1, "Toyota", 8, 21))
+        ridesRef.push().setValue(Ride(trip1, "Toyo", 9, 121))
+        ridesRef.push().setValue(Ride(trip1, "Ford", 1, 3))
+        ridesRef.push().setValue(Ride(trip1, "Ferrari", 2, 8))
+
+        ridesRef.push().setValue(Ride(trip2, "Toyota", 6, 48))
+        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(p0: DataSnapshot?) {
+                val rides = p0?.children?.map { it -> it.getValue(Ride::class.java) }
+                val carMinutes = rides?.fold(0) { total, next -> total + next.carMinutes }
+                toast("${p0?.childrenCount} $carMinutes")
+            }
+
+            override fun onCancelled(p0: FirebaseError?) {
+            }
+
+        })
+        /**
+         * CUR sort cars by rides
+         * CUR total ride time
+         * CUR total wait time
+         * CUR max/min wait
+         * CUR trips
+         * CUR Ride without car
+         */
+        ridesRef.addValueEventListener(object : ValueEventListener {
             override fun onCancelled(p0: FirebaseError?) {
                 throw UnsupportedOperationException()
             }
 
             override fun onDataChange(p0: DataSnapshot?) {
-                toast(p0?.value.toString())
-                myFirebaseRef.child("rides").push().setValue(Ride(14))
+                //                toast(p0?.value.toString())
             }
         })
         val ui = MainActivityUI()
@@ -42,7 +71,10 @@ class MainActivity : AppCompatActivity() {
 
 }
 
-data class Ride(val minutes: Int)
+//data class Car(val name: String)
+open class Hitch(val trip: String, val waitMinutes: Int)
+
+class Ride(trip: String, val car: String, waitMinutes: Int, val carMinutes: Int) : Hitch(trip, waitMinutes)
 
 
 class MainActivityUI : AnkoComponent<MainActivity> {
