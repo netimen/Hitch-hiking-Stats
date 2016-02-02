@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Hitch-hiking Stats</string>
+    <string name="idle">Idle</string>
+    <string name="ride">Ride</string>
+    <string name="wait">Wait</string>
+    <string name="toyota">Toyota</string>
 </resources>
