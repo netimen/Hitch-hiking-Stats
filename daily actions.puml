@@ -1,0 +1,21 @@
+@startuml
+scale 1050 width
+' http://plantuml.sourceforge.net/activity2.html
+title **daily actions**
+
+start
+repeat
+:start waiting;
+if (car arrives?)
+    :start riding;
+    :stop riding;
+    if (need rest or move?)
+        :rest or move etc;
+    else (next ride \nimmediately)
+    endif
+else (no)
+endif
+repeat while(more rides today?)
+stop
+
+@enduml
