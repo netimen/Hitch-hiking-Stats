@@ -61,6 +61,8 @@ ext.deps = [
 
         , anko         : 'org.jetbrains.anko:anko-sdk21:' + versions.anko
         , ankoV4: 'org.jetbrains.anko:anko-support-v4:' + versions.anko
+        , ankoDesign: 'org.jetbrains.anko:anko-design:' + versions.anko
+        , ankoRecycler: 'org.jetbrains.anko:anko-recyclerview-v7:' + versions.anko
 
         , supportDesign: 'com.android.support:design:' + versions.support
         , firebase     : 'com.firebase:firebase-client-android:2.5.0'

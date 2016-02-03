@@ -1,7 +1,17 @@
 <resources>
     <string name="app_name">Hitch-hiking Stats</string>
-    <string name="idle">Idle</string>
-    <string name="ride">Ride</string>
-    <string name="wait">Wait</string>
     <string name="toyota">Toyota</string>
+
+    <string-array name="hitch_states">
+        <item>Idle</item>
+        <item>Wait</item>
+        <item>Ride</item>
+    </string-array>
+
+    <string-array name="trip_tabs">
+        <item>Go!</item>
+        <item>Rides</item>
+        <item>Cars</item>
+        <item>Stats</item>
+    </string-array>
 </resources>
