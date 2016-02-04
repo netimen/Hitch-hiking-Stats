@@ -43,6 +43,9 @@ dependencies {
     compile deps.kotlin
     compile deps.kotlinAndroid
     compile deps.anko
+    compile deps.ankoV4
+    compile deps.ankoDesign
+    compile deps.ankoRecycler
 
     compile deps.supportDesign
 
