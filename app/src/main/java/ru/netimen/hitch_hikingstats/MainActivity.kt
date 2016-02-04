@@ -27,6 +27,7 @@ import org.jetbrains.anko.design.tabLayout
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4.viewPager
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         ridesRef.push().setValue(Ride(trip2, "Toyota", 6, 48))
         ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(p0: DataSnapshot?) {
-                val rides = p0?.children?.map { it -> it.getValue(Ride::class.java) }
+                val rides = (p0?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
                 val carMinutes = rides?.fold(0) { total, next -> total + next.carMinutes }
                 toast("${p0?.childrenCount} $carMinutes")
             }
