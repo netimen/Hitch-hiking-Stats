@@ -50,7 +50,7 @@ dependencies {
     compile deps.supportDesign
 
     compile deps.rxKotlin
-    compile deps.rxBinding
+//    compile deps.rxBinding
 
     compile deps.firebase
 
