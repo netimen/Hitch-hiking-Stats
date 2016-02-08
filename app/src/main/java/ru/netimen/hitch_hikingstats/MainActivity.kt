@@ -45,21 +45,28 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun MutableData.initialValue() = if (value == null) 0 else value as Long
+    fun Hitch.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
+    fun Ride.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
 
-    fun addRide(ref: Firebase, ride: Ride) {
+    fun addRide(ref: Firebase, ride: Hitch) {
         ref.child("rides").push().setValue(ride)
-        addRideExtraData(ref, ride)
-        addRideExtraData(ref.child("trips").child(ride.trip), ride)
+        ride.addExtraData(ref)
+//        addHitchExtraData(ref, ride)
+        addHitchExtraData(ref.child("trips").child(ride.trip), ride)
     }
 
     /**
      * CUR Ride without car
      */
-    private fun addRideExtraData(ref: Firebase, ride: Ride) {
+    private fun addHitchExtraData(ref: Firebase, hitch: Hitch) {
+        ref.child("waitMinutes").runTransaction { add(hitch.waitMinutes) }
+        ref.child("minWait").runTransaction { value = initialValue().run { if (this > hitch.waitMinutes) hitch.waitMinutes else this } }
+        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < hitch.waitMinutes) hitch.waitMinutes else this } }
+    }
+
+    private fun addHitchExtraData(ref: Firebase, ride: Ride) {
+        addHitchExtraData(ref, ride)
         ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
-        ref.child("waitMinutes").runTransaction { add(ride.waitMinutes) }
-        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
-        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
         ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
     }
 
