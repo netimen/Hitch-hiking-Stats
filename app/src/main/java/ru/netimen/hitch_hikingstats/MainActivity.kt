@@ -18,10 +18,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.firebase.client.ChildEventListener
-import com.firebase.client.DataSnapshot
-import com.firebase.client.Firebase
-import com.firebase.client.FirebaseError
+import com.firebase.client.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.design.navigationView
@@ -35,22 +32,53 @@ import java.util.*
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
+    fun Firebase.runTransaction(transformValue: MutableData.() -> Unit) = runTransaction(object : Transaction.Handler {
+        override fun onComplete(p0: FirebaseError?, p1: Boolean, p2: DataSnapshot?) {
+        }
+
+        override fun doTransaction(p0: MutableData?): Transaction.Result? = Transaction.success(p0?.apply(transformValue))
+
+    })
+
+    fun MutableData.add(v: Int) {
+        value = v + initialValue()
+    }
+
+    private fun MutableData.initialValue() = if (value == null) 0 else value as Long
+
+    fun addRide(ref: Firebase, ride: Ride) {
+        ref.child("rides").push().setValue(ride)
+        addRideExtraData(ref, ride)
+        addRideExtraData(ref.child("trips").child(ride.trip), ride)
+    }
+
+    /**
+     * CUR Ride without car
+     */
+    private fun addRideExtraData(ref: Firebase, ride: Ride) {
+        ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
+        ref.child("waitMinutes").runTransaction { add(ride.waitMinutes) }
+        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
+        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
+        ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Firebase.setAndroidContext(this)
         Firebase.getDefaultConfig().isPersistenceEnabled = true
         val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+        ref.removeValue()
         val ridesRef = ref.child("rides")
-        //        ridesRef.removeValue()
-        //        val trip1 = "Big Trip"
-        //        val trip2 = "Small Trip"
-        //        ridesRef.push().setValue(Ride(trip1, "Toyota", 7, 15))
-        //        ridesRef.push().setValue(Ride(trip1, "Toyota", 8, 21))
-        //        ridesRef.push().setValue(Ride(trip1, "Toyo", 9, 121))
-        //        ridesRef.push().setValue(Ride(trip1, "Ford", 1, 3))
-        //        ridesRef.push().setValue(Ride(trip1, "Ferrari", 2, 8))
+        val trip1 = "Big Trip"
+        val trip2 = "Small Trip"
+        addRide(ref, Ride(trip1, "Toyota", 7, 15))
+        addRide(ref, Ride(trip1, "Toyota", 8, 21))
+        addRide(ref, Ride(trip1, "Toyo", 9, 121))
+        addRide(ref, Ride(trip1, "Ford", 1, 3))
+        addRide(ref, Ride(trip1, "Ferrari", 2, 8))
         //
-        //        ridesRef.push().setValue(Ride(trip2, "Toyota", 6, 48))
+        addRide(ref, Ride(trip2, "Toyota", 6, 48))
         val millis = System.currentTimeMillis()
         //        error("AAAAAstart$millis")
         //        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
@@ -67,12 +95,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //
         //        })
         /**
-         * CUR sort cars by rides
-         * CUR total ride time
-         * CUR total wait time
-         * CUR max/min wait
-         * CUR trips
-         * CUR Ride without car
          */
         ridesRef.addChildEventListener(object : ChildEventListener {
             override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
@@ -260,6 +282,8 @@ class MainActivityUI : AnkoComponent<MainActivity> {
     fun _DrawerLayout.createNavigationView(ui: AnkoContext<MainActivity>) {
         navigationView {
             fitsSystemWindows = true
+            menu.add("aaaa")
+            menu.add("bbb")
             //            setNavigationItemSelectedListener(ui.owner)
             //            inflateHeaderView(R.layout.nav_header_main)
             //            inflateMenu(R.menu.activity_main_drawer)
