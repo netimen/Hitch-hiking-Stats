@@ -32,6 +32,11 @@ import java.util.*
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
+    interface Repo {
+        fun getRides()
+
+    }
+
     fun Firebase.runTransaction(transformValue: MutableData.() -> Unit) = runTransaction(object : Transaction.Handler {
         override fun onComplete(p0: FirebaseError?, p1: Boolean, p2: DataSnapshot?) {
         }
@@ -45,29 +50,23 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun MutableData.initialValue() = if (value == null) 0 else value as Long
-    fun Hitch.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
-    fun Ride.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
+    //    fun Hitch.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
+    //    fun Ride.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
 
-    fun addRide(ref: Firebase, ride: Hitch) {
+    fun addRide(ref: Firebase, ride: Ride) {
         ref.child("rides").push().setValue(ride)
-        ride.addExtraData(ref)
-//        addHitchExtraData(ref, ride)
-        addHitchExtraData(ref.child("trips").child(ride.trip), ride)
+        addRideExtraData(ref, ride)
+        addRideExtraData(ref.child("trips").child(ride.trip), ride)
     }
 
-    /**
-     * CUR Ride without car
-     */
-    private fun addHitchExtraData(ref: Firebase, hitch: Hitch) {
-        ref.child("waitMinutes").runTransaction { add(hitch.waitMinutes) }
-        ref.child("minWait").runTransaction { value = initialValue().run { if (this > hitch.waitMinutes) hitch.waitMinutes else this } }
-        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < hitch.waitMinutes) hitch.waitMinutes else this } }
-    }
-
-    private fun addHitchExtraData(ref: Firebase, ride: Ride) {
-        addHitchExtraData(ref, ride)
-        ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
-        ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
+    private fun addRideExtraData(ref: Firebase, ride: Ride) {
+        ref.child("waitMinutes").runTransaction { add(ride.waitMinutes) }
+        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
+        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
+        if (ride.hasCar()) {
+            ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
+            ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,15 +76,12 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
         ref.removeValue()
         val ridesRef = ref.child("rides")
-        val trip1 = "Big Trip"
-        val trip2 = "Small Trip"
-        addRide(ref, Ride(trip1, "Toyota", 7, 15))
-        addRide(ref, Ride(trip1, "Toyota", 8, 21))
-        addRide(ref, Ride(trip1, "Toyo", 9, 121))
-        addRide(ref, Ride(trip1, "Ford", 1, 3))
-        addRide(ref, Ride(trip1, "Ferrari", 2, 8))
-        //
-        addRide(ref, Ride(trip2, "Toyota", 6, 48))
+        val trips = arrayOf("Small Trip", "Big Trip", "Middle Trip")
+        val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
+        val r = Random()
+        for (i in 1..10)
+            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)));
+
         val millis = System.currentTimeMillis()
         //        error("AAAAAstart$millis")
         //        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
@@ -149,9 +145,13 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 }
 
 //data class Car(val name: String)
-open class Hitch(val trip: String, val waitMinutes: Int)
+//open class Hitch(val trip: String, val waitMinutes: Int)
 
-class Ride(trip: String, val car: String, waitMinutes: Int, val carMinutes: Int) : Hitch(trip, waitMinutes)
+class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) {
+    constructor(trip: String, waitMinutes: Int) : this(trip, "", waitMinutes, 0)
+
+    fun hasCar() = carMinutes != 0
+}// : Hitch(trip, waitMinutes)
 
 
 class GoFragment : Fragment() {
