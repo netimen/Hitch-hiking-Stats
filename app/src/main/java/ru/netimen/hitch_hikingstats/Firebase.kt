@@ -1,6 +1,8 @@
 package ru.netimen.hitch_hikingstats
 
 import com.firebase.client.*
+import com.soikonomakis.rxfirebase.RxFirebase
+import java.util.*
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -93,3 +95,12 @@ private fun removeRideExtraData(ref: Firebase, ride: Ride) {
     }
 }
 
+fun minWait(ref: Firebase) = minMaxWait(ref, Query::limitToFirst)
+fun maxWait(ref: Firebase) = minMaxWait(ref, Query::limitToLast)
+
+private fun minMaxWait(ref: Firebase, lmt: Query.(Int) -> Query) = RxFirebase.getInstance()
+        .observeSingleValue(ref.child("rides").orderByChild("waitMinutes").lmt(1))
+        .map(::extractRides)
+        .map { it[0].waitMinutes }
+
+private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }

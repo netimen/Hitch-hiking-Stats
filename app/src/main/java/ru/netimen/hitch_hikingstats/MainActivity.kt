@@ -18,7 +18,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.firebase.client.*
+import com.firebase.client.ChildEventListener
+import com.firebase.client.DataSnapshot
+import com.firebase.client.Firebase
+import com.firebase.client.FirebaseError
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.design.navigationView
@@ -38,8 +41,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     }
 
 
-
-//CUR min/max wait
     //CUR authenticate
     //CUR paginated loading
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,17 +54,30 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-        for (i in 1..2)
+        for (i in 1..4)
             addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
         removeRide(ref, rides[0])
-    changeRide(ref,rides[1],rides[0])
+        changeRide(ref, rides[1], rides[0])
+        minWait(ref).subscribe { error("AAAAAAmin$it") }
+        maxWait(ref).subscribe { error("AAAAAAmax$it") }
+        //    .addListenerForSingleValueEvent(object:ValueEventListener{
+        //        override fun onCancelled(p0: FirebaseError?) {
+        //            throw UnsupportedOperationException()
+        //        }
+        //
+        //        override fun onDataChange(p0: DataSnapshot?) {
+        //            val rides = (p0?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
+        //            error("AAAAAAmin${rides[0].waitMinutes}")
+        //        }
+        //
+        //    })
         val millis = System.currentTimeMillis()
         //        error("AAAAAstart$millis")
         //        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
         //            override fun onDataChange(p0: DataSnapshot?) {
         //                error("AAAAAddd${System.currentTimeMillis() - l} ${(p0?.value as HashMap<*,*>).size}")
-        //                val rides = (p0?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
+        //                        val rides = (p0?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
         //                val carMinutes = rides?.fold(0) { total, next -> total + next.carMinutes }
         //                error("AAAAAeeee${System.currentTimeMillis() - l} $carMinutes")
         //                toast("${p0?.childrenCount} $carMinutes")
@@ -117,6 +131,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         ui.tabs.setupWithViewPager(ui.pager)
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
+
 
 }
 
