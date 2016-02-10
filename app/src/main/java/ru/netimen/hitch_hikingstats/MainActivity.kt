@@ -37,38 +37,12 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
     }
 
-    fun Firebase.runTransaction(transformValue: MutableData.() -> Unit) = runTransaction(object : Transaction.Handler {
-        override fun onComplete(p0: FirebaseError?, p1: Boolean, p2: DataSnapshot?) {
-        }
 
-        override fun doTransaction(p0: MutableData?): Transaction.Result? = Transaction.success(p0?.apply(transformValue))
 
-    })
-
-    fun MutableData.add(v: Int) {
-        value = v + initialValue()
-    }
-
-    private fun MutableData.initialValue() = if (value == null) 0 else value as Long
-    //    fun Hitch.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
-    //    fun Ride.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
-
-    fun addRide(ref: Firebase, ride: Ride) {
-        ref.child("rides").push().setValue(ride)
-        addRideExtraData(ref, ride)
-        addRideExtraData(ref.child("trips").child(ride.trip), ride)
-    }
-
-    private fun addRideExtraData(ref: Firebase, ride: Ride) {
-        ref.child("waitMinutes").runTransaction { add(ride.waitMinutes) }
-        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
-        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
-        if (ride.hasCar()) {
-            ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
-            ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
-        }
-    }
-
+//CUR min/max wait
+    //CUR authenticate
+    //CUR change ride
+    //CUR paginated loading
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Firebase.setAndroidContext(this)
@@ -79,9 +53,11 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val trips = arrayOf("Small Trip", "Big Trip", "Middle Trip")
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
-        for (i in 1..10)
-            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)));
+        val rides = ArrayList<Ride>()
+        for (i in 1..2)
+            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
+        removeRide(ref, rides[0])
         val millis = System.currentTimeMillis()
         //        error("AAAAAstart$millis")
         //        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {
@@ -147,7 +123,9 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 //data class Car(val name: String)
 //open class Hitch(val trip: String, val waitMinutes: Int)
 
-class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) {
+data class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) {
+    lateinit var id: String
+
     constructor(trip: String, waitMinutes: Int) : this(trip, "", waitMinutes, 0)
 
     fun hasCar() = carMinutes != 0
@@ -180,7 +158,7 @@ class ListFragment : Fragment() {
             add = floatingActionButton {
                 imageResource = R.drawable.ic_add
             }.lparams {
-                gravity = Gravity.RIGHT or Gravity.BOTTOM;
+                gravity = Gravity.RIGHT or Gravity.BOTTOM
                 margin = dimen(R.dimen.margin_big)
             }
         }
@@ -259,7 +237,7 @@ class MainActivityUI : AnkoComponent<MainActivity> {
     //                }.lparams(width = matchParent) {
     //                    val tv = TypedValue()
     //                    if (ui.owner.theme.resolveAttribute(R.attr.actionBarSize, tv, true)) {
-    //                        height = TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics);
+    //                        height = TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
     //                    }
     //                }
     //            }.lparams(width = matchParent)
