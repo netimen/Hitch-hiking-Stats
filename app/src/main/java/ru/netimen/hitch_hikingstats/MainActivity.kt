@@ -41,7 +41,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 //CUR min/max wait
     //CUR authenticate
-    //CUR change ride
     //CUR paginated loading
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +57,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
         removeRide(ref, rides[0])
+    changeRide(ref,rides[1],rides[0])
         val millis = System.currentTimeMillis()
         //        error("AAAAAstart$millis")
         //        ridesRef.orderByChild("trip").equalTo(trip1).addValueEventListener(object : ValueEventListener {

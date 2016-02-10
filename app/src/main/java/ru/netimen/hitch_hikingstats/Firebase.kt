@@ -27,17 +27,47 @@ private fun MutableData.subtract(v: Int) {
 }
 
 private fun MutableData.initialValue() = if (value == null) 0 else value as Long
-//    fun Hitch.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
-//    fun Ride.addExtraData(ref: Firebase) = addHitchExtraData(ref, this)
+
+private fun Firebase.trips() = child("trips")
+private fun Firebase.trip(key: String) = trips().child(key)
+private fun Firebase.rides() = child("rides")
+private fun Firebase.ride(key: String) = rides().child(key)
+private fun Firebase.cars() = child("cars")
+private fun Firebase.car(key: String) = cars().child(key)
 
 fun addRide(ref: Firebase, ride: Ride) {
-    with(ref.child("rides").push()) {
+    with(ref.rides().push()) {
         ride.id = this.key
         setValue(ride)
     }
 
-    addRideExtraData(ref, ride)
-    addRideExtraData(ref.child("trips").child(ride.trip), ride)
+    extraData(ref, ride, ::addRideExtraData)
+}
+
+fun removeRide(ref: Firebase, ride: Ride) = with(ref.ride(ride.id)) {
+    addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onCancelled(p0: FirebaseError?) {
+        }
+
+        override fun onDataChange(p0: DataSnapshot?) {
+            if (p0?.exists() ?: false) {
+                this@with.removeValue()
+                extraData(ref, ride, ::removeRideExtraData)
+            }
+        }
+    })
+}
+
+fun changeRide(ref: Firebase, old: Ride, new: Ride) {
+    new.id = old.id // make sure we keep the id
+    ref.ride(old.id).setValue(new)
+    extraData(ref, new, ::addRideExtraData)
+    extraData(ref, old, ::removeRideExtraData)
+}
+
+private fun extraData(ref: Firebase, ride: Ride, fn: (Firebase, Ride) -> Unit) = with(ref) {
+    fn(ref, ride)
+    fn(ref.trip(ride.trip), ride)
 }
 
 private fun addRideExtraData(ref: Firebase, ride: Ride) {
@@ -46,37 +76,20 @@ private fun addRideExtraData(ref: Firebase, ride: Ride) {
     //        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
     if (ride.hasCar()) {
         ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
-        ref.child("cars").child(ride.car).runTransaction { add(1) } // CUR carTime
+        ref.car(ride.car).runTransaction { add(1) } // CUR carTime
     }
 }
 
 private fun removeRideExtraData(ref: Firebase, ride: Ride) {
     ref.child("waitMinutes").runTransaction { subtract(ride.waitMinutes) }
-    //        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
-    //        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
+
     if (ride.hasCar()) {
         ref.child("carMinutes").runTransaction { subtract(ride.carMinutes) }
-        ref.child("cars").child(ride.car).runTransaction {
+        ref.car(ride.car).runTransaction {
             subtract(1)
             if (value as Long == 0L)
-                ref.child("cars").child(ride.car).removeValue()
+                ref.car(ride.car).removeValue()
         }
     }
 }
 
-fun removeRide(ref: Firebase, ride: Ride) {
-    with(ref.child("rides").child(ride.id)) {
-        addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onCancelled(p0: FirebaseError?) {
-            }
-
-            override fun onDataChange(p0: DataSnapshot?) {
-                if (p0?.exists() ?: false) {
-                    this@with.removeValue()
-                    removeRideExtraData(ref, ride)
-                    removeRideExtraData(ref.child("trips").child(ride.trip), ride)
-                }
-            }
-        })
-    }
-}
