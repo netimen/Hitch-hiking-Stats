@@ -35,12 +35,6 @@ import java.util.*
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
-    interface Repo {
-        fun getRides()
-
-    }
-
-
     //CUR authenticate
     //CUR paginated loading
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -74,8 +74,6 @@ private fun extraData(ref: Firebase, ride: Ride, fn: (Firebase, Ride) -> Unit) =
 
 private fun addRideExtraData(ref: Firebase, ride: Ride) {
     ref.child("waitMinutes").runTransaction { add(ride.waitMinutes) }
-    //        ref.child("minWait").runTransaction { value = initialValue().run { if (this > ride.waitMinutes) ride.waitMinutes else this } }
-    //        ref.child("maxWait").runTransaction { value = initialValue().run { if (this < ride.waitMinutes) ride.waitMinutes else this } }
     if (ride.hasCar()) {
         ref.child("carMinutes").runTransaction { add(ride.carMinutes) }
         ref.car(ride.car).runTransaction { add(1) } // CUR carTime
