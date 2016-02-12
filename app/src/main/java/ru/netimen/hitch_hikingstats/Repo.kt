@@ -2,6 +2,7 @@ package ru.netimen.hitch_hikingstats
 
 import rx.Observable
 import rx.schedulers.Schedulers
+import java.util.*
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -13,7 +14,7 @@ import rx.schedulers.Schedulers
 
 interface ListParams
 
-data class Result<T, E>(val result: T, val error: E?) {
+data class Result<T, E>(val result: T, val error: E?) { // CUR result->data?
 
     fun isSuccessfull(): Boolean = error == null
 
@@ -71,5 +72,35 @@ abstract class GetManyUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, 
     protected var page: Int = 0;
 
     override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getMany(Repo.Query(listParams, page, perPage))
+}
 
+open class BranchableObservable<T>(protected val observable: Observable<T>) {
+    protected var branches = ArrayList<Pair<(T) -> Boolean, (T) -> Unit>>()
+
+    fun branch(predicate: (T) -> Boolean, onNext: (T) -> Unit) {
+        branches.add(predicate to onNext)
+    }
+
+    fun <R> branch(predicate: (T) -> Boolean, onNext: (R) -> Unit, map: (T) -> (R)) = branch(predicate, { onNext(map(it)) })
+
+    fun subscribe(defaultOnNext: (T) -> Unit, onError: (Throwable) -> Unit) = observable
+            .groupBy groupBy@ {
+                for ((index, branch)in branches.withIndex())
+                    if (branch.first(it))
+                        return@groupBy index
+                return@groupBy -1
+            }
+            .subscribe({ it.subscribe(if (it.key == -1) defaultOnNext else branches[it.key].second, onError) }, onError)
+}
+
+open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : BranchableObservable<Result<T, E>>(observable) {
+    fun onData(onData: (T) -> Unit) = branch({ it.isSuccessfull() }, onData, { it.result })
+
+    fun onError(onError: (E) -> Unit) = branch({ !it.isSuccessfull() }, onError, { it.error!! })
+
+    fun subscribe(onUnexpectedError:(Throwable)->Unit)=subscribe({}, onUnexpectedError)
+}
+
+class LoadObservable<T, E>(observable: Observable<Result<T, E>>):ResultObservable<T, E>(observable) {
+    fun onNoData(noDataPredicate:(T)->Boolean, onNoData: (Unit)->Unit) = branch({noDataPredicate(it.result)}, onNoData, {})
 }
