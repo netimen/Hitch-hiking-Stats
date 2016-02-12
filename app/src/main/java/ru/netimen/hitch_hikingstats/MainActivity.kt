@@ -304,3 +304,22 @@ class MainActivityUI : AnkoComponent<MainActivity> {
 
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
+
+class A {
+    class Result<T>(val data: T?, val error: Throwable?) {
+        fun isSuccessful() = data != null // CUR use let here?
+    }
+
+    fun process(data: Int) = 0
+
+    fun test() {
+        val r = Result(5, null)
+
+        if (r.data != null)
+            process(r.data) // OK
+
+        if (r.isSuccessful())
+            process(r.data)
+    }
+}
+
