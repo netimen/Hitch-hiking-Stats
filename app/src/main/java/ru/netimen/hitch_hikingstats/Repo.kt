@@ -14,14 +14,14 @@ import java.util.*
 
 interface ListParams
 
-data class Result<T, E>(val result: T?, val error: E?) { // CUR result->data?
+data class Result<T, E>(val data: T? = null, val error: E? = null) { // CUR result->data?
 
-    inline fun isSuccessful(): Boolean = result != null
+    fun isSuccessful(): Boolean = data != null
 
-    companion object Factory {
-        fun <T, E> success(result: T) = Result(result, null as E)
-        fun <T, E> error(error: E) = Result(null as T, error)
-    }
+    //    companion object Factory {
+    //        fun <T, E> success(result: T) = Result(result, null as E)
+    //        fun <T, E> error(error: E) = Result(null as T, error)
+    //    }
 }
 
 interface Repo<T, E, L : ListParams> {
@@ -94,7 +94,7 @@ open class BranchableObservable<T>(protected val observable: Observable<T>) {
 }
 
 open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : BranchableObservable<Result<T, E>>(observable) {
-    fun onData(onData: (T) -> Unit) = branch({ it.isSuccessful() }, onData, { it.result!! })
+    fun onData(onData: (T) -> Unit) = branch({ it.isSuccessful() }, onData, { it.data!! })
 
     fun onError(onError: (E) -> Unit) = branch({ !it.isSuccessful() }, onError, { it.error!! })
 
@@ -102,25 +102,9 @@ open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : Branch
 }
 
 class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable) {
-    fun onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ if (it.isSuccessful()) noDataPredicate(it.result) else false }, { onNoData() }, {})
+    fun onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let { noDataPredicate(it) } ?: false }, { onNoData() }, {})
 }
 
+fun <T, E> transformResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
 
-//class ResultTransformer<T, E>(protected val errorInfoFactory: (Throwable) -> E) : Observable.Transformer<T, Result<T, E>> {
-//    override fun call(p0: Observable<T>?): Observable<Result<T, E>>? {
-//        throw UnsupportedOperationException()
-//    }
-//
-//}
-
-//return observable
-//.map(Result::<T, E>success)
-//.onErrorReturn(t -> Result.<T, E>error(errorInfoFactory.call(t)));
-fun <T, E> transformResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result.success<T, E>(it) }.onErrorReturn { Result.error(errorInfoFactory(it)) } }
-
-fun aaa() {
-    Observable.just(3)
-            .compose (transformResult { "" })
-    //                .compose { it.map (::Result.success(it) ).onErrorReturn { } }
-}
 

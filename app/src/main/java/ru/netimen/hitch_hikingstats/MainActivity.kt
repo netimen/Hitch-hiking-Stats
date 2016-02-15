@@ -31,6 +31,7 @@ import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
+import rx.Observable
 import java.util.*
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
@@ -305,21 +306,53 @@ class MainActivityUI : AnkoComponent<MainActivity> {
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
 
+//class A {
+//class Result2<T, E> protected constructor(val data: T?, val error: E?) {
 class A {
-    class Result<T>(val data: T?, val error: Throwable?) {
-        fun isSuccessful() = data != null // CUR use let here?
+    class Result<T, E> constructor(val data: T? = null, val error: E? = null) {
+//        constructor(data: T) : this(data, null)
+
+//        constructor(error: E) : this(null, error)
+        //        companion object Factory {
+        //            fun <T> success(result: T) = Result(result, null)
+        //            fun <T> error(error: E) = Result(null as T, error)
+        //        }
     }
+
+    //    fun <T> safeOperation(dangerousOperation: () -> T): Result<T> = try {
+    //        Result.success(dangerousOperation())
+    //    } catch(e: Throwable) {
+    //        Result.error(e)
+    //        //        Result(null, e)
+    //        //        Result(e)
+    //    }
+
 
     fun process(data: Int) = 0
 
+    fun <T, E> transformResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error=errorInfoFactory(it)) } }
+    //fun <T, E> transformResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result2<T>> = { it.map { Result2.success(it) }.onErrorReturn { Result2.error(it) } }
+
     fun test() {
-        val r = Result(5, null)
+            Observable.just(3).compose(transformResult { "aaaa" })
+//        val aa = safeOperation { throw UnsupportedOperationException() }
+        //    process(aa.data)
+        //    val r = Result.success(5)
+        //    val rrr = Result2.error(5)
 
-        if (r.data != null)
-            process(r.data) // OK
+        //    if (r.data != null)
+        //        process(r.data) // OK
 
-        if (r.isSuccessful())
-            process(r.data)
+        //    if (r.isSuccessful())
+        //        process(r.data)
     }
-}
 
+}
+//}
+//class B<T> protected constructor(val data: Int)
+//
+//fun test(b: B) {
+//    val i = b.data
+//}
+
+private class CCC
