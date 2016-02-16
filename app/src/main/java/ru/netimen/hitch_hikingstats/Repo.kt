@@ -1,7 +1,10 @@
 package ru.netimen.hitch_hikingstats
 
+import android.support.annotation.CallSuper
 import rx.Observable
+import rx.Subscription
 import rx.schedulers.Schedulers
+import rx.subscriptions.CompositeSubscription
 import java.util.*
 
 /**
@@ -14,7 +17,7 @@ import java.util.*
 
 interface ListParams
 
-data class Result<T, E>(val data: T? = null, val error: E? = null) { // CUR result->data?
+data class Result<T, E>(val data: T? = null, val error: E? = null) {
 
     fun isSuccessful(): Boolean = data != null
 
@@ -28,7 +31,7 @@ interface Repo<T, E, L : ListParams> {
 
     class Query<L>(val listParams: L, val page: Int = 0, val perPage: Int = 0, val limit: Int = -1)
 
-    fun getMany(query: Query<L>): Observable<Result<List<T>, E>>//CUR getList?
+    fun getList(query: Query<L>): Observable<Result<List<T>, E>>
 
     fun get(id: String): Observable<Result<T, E>>
 
@@ -63,25 +66,19 @@ abstract class ResultUseCase<T, E>(schedulingStrategy: SchedulingStrategy<Result
 
 abstract class RepoUseCase<T, E, R : Repo<*, E, *>>(protected val repo: R) : ResultUseCase<T, E>(SchedulingStrategy.ioMain())
 
-class GetUseCase<T, E, R : Repo<T, E, ListParams>>(repo: R, protected val uuid: String) : RepoUseCase<T, E, R>(repo) {
+open class GetUseCase<T, E, R : Repo<T, E, ListParams>>(repo: R, protected val uuid: String) : RepoUseCase<T, E, R>(repo) {
 
     override fun useCaseObservable(): Observable<Result<T, E>> = repo.get(uuid)
 }
 
-abstract class GetManyUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, protected val listParams: L, protected val perPage: Int) : RepoUseCase<List<T>, E, R>(repo) {
-    protected var page: Int = 0;
+abstract class GetListUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, protected val listParams: L, protected val perPage: Int) : RepoUseCase<List<T>, E, R>(repo) {
+    protected var page: Int = 0
 
-    override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getMany(Repo.Query(listParams, page, perPage))
+    override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getList(Repo.Query(listParams, page, perPage))
 }
 
 open class BranchableObservable<T>(protected val observable: Observable<T>) {
-    protected var branches = ArrayList<Pair<(T) -> Boolean, (T) -> Unit>>()
-
-    fun branch(predicate: (T) -> Boolean, onNext: (T) -> Unit) {
-        branches.add(predicate to onNext)
-    }
-
-    fun <R> branch(predicate: (T) -> Boolean, onNext: (R) -> Unit, map: (T) -> (R)) = branch(predicate, { onNext(map(it)) })
+    internal val branches = ArrayList<Pair<(T) -> Boolean, (T) -> Unit>>()
 
     fun subscribe(defaultOnNext: (T) -> Unit, onError: (Throwable) -> Unit) = observable
             .groupBy groupBy@ {
@@ -93,18 +90,78 @@ open class BranchableObservable<T>(protected val observable: Observable<T>) {
             .subscribe({ it.subscribe(if (it.key == -1) defaultOnNext else branches[it.key].second, onError) }, onError)
 }
 
+// these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
+fun <T, O : BranchableObservable<T>> O.branch(predicate: (T) -> Boolean, onNext: (T) -> Unit) = apply { branches.add(predicate to onNext) }
+
+fun <T, O : BranchableObservable<T>, R> O.branch(predicate: (T) -> Boolean, onNext: (R) -> Unit, map: (T) -> (R)) = branch(predicate, { onNext(map(it)) })
+
+
 open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : BranchableObservable<Result<T, E>>(observable) {
-    fun onData(onData: (T) -> Unit) = branch({ it.isSuccessful() }, onData, { it.data!! })
-
-    fun onError(onError: (E) -> Unit) = branch({ !it.isSuccessful() }, onError, { it.error!! })
-
     fun subscribe(onUnexpectedError: (Throwable) -> Unit) = subscribe({}, onUnexpectedError)
 }
 
-class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable) {
-    fun onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let { noDataPredicate(it) } ?: false }, { onNoData() }, {})
+// these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
+fun <T, E, O : ResultObservable<T, E>> O.onData(onData: (T) -> Unit) = branch({ it.isSuccessful() }, onData, { it.data!! })
+
+fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch({ !it.isSuccessful() }, onError, { it.error!! })
+
+
+open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable)
+
+// these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
+fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let { noDataPredicate(it) } ?: false }, { onNoData() }, {})
+
+fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
+
+
+fun <T, E> wrapResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
+
+interface MVPView
+
+interface DataView<T, E> : MVPView {
+    fun showLoading()
+    fun showData(data: T)
+    fun showNoData()
+    fun showError(error: E)
 }
 
-fun <T, E> transformResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
+interface PagingView<T, E> : DataView<List<T>, E> {
+    fun showLoadingNextPage()
+    fun showErrorNextPage()
+}
 
+abstract class Presenter<V : MVPView> {
+    private val allSubscriptions = CompositeSubscription()
+    private var viewInternal: V? = null
+    protected val view: V
+        get() = viewInternal?.apply {} ?: throw IllegalStateException("A View must be attached to this presenter to access the view property")
 
+    fun isViewAttached() = viewInternal != null
+
+    @CallSuper
+    fun onAttachView(view: V): Unit {
+        this.viewInternal = view
+    }
+
+    protected fun unsubscribeOnDetach(s: Subscription) = allSubscriptions.add(s)
+
+    @CallSuper
+    fun onDetachView() {
+        viewInternal = null
+        allSubscriptions.clear()
+    }
+}
+
+open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>() {
+    protected val objects = ArrayList<T>()
+
+    fun load() {
+        view.showLoading()
+
+        unsubscribeOnDetach(LoadObservable(loadUseCase.execute())
+                .onError { view.showError(it) }
+                .onData { view.showData(objects.apply { addAll(it) }) }
+                .onNoData { view.showNoData() }
+                .subscribe { }) // CUR show unexpected error
+    }
+}
