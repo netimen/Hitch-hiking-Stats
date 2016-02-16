@@ -97,7 +97,7 @@ fun <T, O : BranchableObservable<T>, R> O.branch(predicate: (T) -> Boolean, onNe
 
 
 open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : BranchableObservable<Result<T, E>>(observable) {
-    fun subscribe(onUnexpectedError: (Throwable) -> Unit) = subscribe({}, onUnexpectedError)
+    fun subscribe(onUnexpectedError: (Throwable) -> Unit = {}) = subscribe({}, onUnexpectedError)
 }
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
@@ -162,6 +162,6 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
                 .onError { view.showError(it) }
                 .onData { view.showData(objects.apply { addAll(it) }) }
                 .onNoData { view.showNoData() }
-                .subscribe { }) // CUR show unexpected error
+                .subscribe()) // CUR show unexpected error
     }
 }
