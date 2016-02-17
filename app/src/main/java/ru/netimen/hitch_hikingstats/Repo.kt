@@ -109,7 +109,7 @@ fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch(
 open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable)
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
-fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let { noDataPredicate(it) } ?: false }, { onNoData() }, {})
+fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ if (it.data != null) noDataPredicate(it.data) else false }, { onNoData() }, {})
 
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
@@ -132,22 +132,22 @@ interface PagingView<T, E> : DataView<List<T>, E> {
 
 abstract class Presenter<V : MVPView> {
     private val allSubscriptions = CompositeSubscription()
-    private var viewInternal: V? = null
-    protected val view: V
-        get() = viewInternal?.apply {} ?: throw IllegalStateException("A View must be attached to this presenter to access the view property")
+    protected var view: V? = null
 
-    fun isViewAttached() = viewInternal != null
+    fun isViewAttached() = view != null
+
+    fun assertViewAttached() = view.onNull { throw IllegalStateException("A View must be attached to this presenter to access the view property") }
 
     @CallSuper
     fun onAttachView(view: V): Unit {
-        this.viewInternal = view
+        this.view = view
     }
 
     protected fun unsubscribeOnDetach(s: Subscription) = allSubscriptions.add(s)
 
     @CallSuper
     fun onDetachView() {
-        viewInternal = null
+        view = null
         allSubscriptions.clear()
     }
 }
@@ -156,12 +156,14 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
     protected val objects = ArrayList<T>()
 
     fun load() {
-        view.showLoading()
+        assertViewAttached()
+
+        view?.showLoading()
 
         unsubscribeOnDetach(LoadObservable(loadUseCase.execute())
-                .onError { view.showError(it) }
-                .onData { view.showData(objects.apply { addAll(it) }) }
-                .onNoData { view.showNoData() }
+                .onError { view?.showError(it) }
+                .onData { view?.showData(objects.apply { addAll(it) }) }
+                .onNoData { view?.showNoData() }
                 .subscribe()) // CUR show unexpected error
     }
 }

@@ -22,14 +22,13 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-
 ext.versions = [ // http://stackoverflow.com/a/9547593/190148
                  compileSdk    : 23
                  , targetSdk   : 23
                  , minSdk      : 21
                  , buildTools  : '23.0.2'
                  , support     : '23.1.1'
-                 , kotlin      : '1.0.0-rc-1036'
+                 , kotlin      : '1.0.0'
                  , anko        : '0.8.2'
                  , dagger      : '2.0.2'
                  , rxBinding   : '0.3.0'
