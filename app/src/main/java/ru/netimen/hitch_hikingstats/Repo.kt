@@ -109,7 +109,7 @@ fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch(
 open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable)
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
-fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ if (it.data != null) noDataPredicate(it.data) else false }, { onNoData() }, {})
+fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let(noDataPredicate) ?: false }, { onNoData() }, {})
 
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
@@ -167,3 +167,13 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
                 .subscribe()) // CUR show unexpected error
     }
 }
+
+class TripListParams(val trip: String) : ListParams
+
+class ErrorInfo
+
+interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
+
+//class RidesRepo : Repo<Ride, ErrorInfo, TripListParams> {
+interface RidesRepo : HitchRepo<Ride>
+

@@ -2,6 +2,7 @@ package ru.netimen.hitch_hikingstats
 
 import com.firebase.client.*
 import com.soikonomakis.rxfirebase.RxFirebase
+import rx.Observable
 import java.util.*
 
 /**
@@ -102,3 +103,23 @@ private fun minMaxWait(ref: Firebase, lmt: Query.(Int) -> Query) = RxFirebase.ge
         .map { it[0].waitMinutes }
 
 private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
+
+
+private open class FirebaseRepo {
+    protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+}
+
+class FirebaseRidesRepo : FirebaseRepo(), RidesRepo {
+    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun addOrUpdate(t: Ride) {
+        throw UnsupportedOperationException()
+    }
+}
+
