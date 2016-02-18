@@ -33,9 +33,11 @@ interface Repo<T, E, L : ListParams> {
 
     fun getList(query: Query<L>): Observable<Result<List<T>, E>>
 
-    fun get(id: String): Observable<Result<T, E>>
+    fun get(id: String): Observable<Result<T, E>> // CUR IdRepo
 
     fun addOrUpdate(t: T)
+
+    fun remove(t: T)
 }
 
 
@@ -168,7 +170,7 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
     }
 }
 
-class TripListParams(val trip: String) : ListParams
+class TripListParams(val trip: String?) : ListParams
 
 class ErrorInfo
 

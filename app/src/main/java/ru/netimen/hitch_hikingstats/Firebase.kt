@@ -21,6 +21,13 @@ private fun Firebase.runTransaction(transformValue: MutableData.() -> Unit) = ru
 
 })
 
+private fun Firebase.onDataLoaded(onDataLoaded: (DataSnapshot) -> Unit) = addListenerForSingleValueEvent(object : ValueEventListener {
+    override fun onDataChange(p0: DataSnapshot?) = p0?.let(onDataLoaded) ?: Unit
+
+    override fun onCancelled(p0: FirebaseError?) {
+    }
+})
+
 private fun MutableData.add(v: Int) {
     value = initialValue() + v
 }
@@ -38,37 +45,8 @@ private fun Firebase.ride(key: String) = rides().child(key)
 private fun Firebase.cars() = child("cars")
 private fun Firebase.car(key: String) = cars().child(key)
 
-fun addRide(ref: Firebase, ride: Ride) {
-    with(ref.rides().push()) {
-        ride.id = this.key
-        setValue(ride)
-    }
 
-    extraData(ref, ride, ::addRideExtraData)
-}
-
-fun removeRide(ref: Firebase, ride: Ride) = with(ref.ride(ride.id)) {
-    addListenerForSingleValueEvent(object : ValueEventListener {
-        override fun onCancelled(p0: FirebaseError?) {
-        }
-
-        override fun onDataChange(p0: DataSnapshot?) {
-            if (p0?.exists() ?: false) {
-                this@with.removeValue()
-                extraData(ref, ride, ::removeRideExtraData)
-            }
-        }
-    })
-}
-
-fun changeRide(ref: Firebase, old: Ride, new: Ride) {
-    new.id = old.id // make sure we keep the id
-    ref.ride(old.id).setValue(new)
-    extraData(ref, new, ::addRideExtraData)
-    extraData(ref, old, ::removeRideExtraData)
-}
-
-private fun extraData(ref: Firebase, ride: Ride, fn: (Firebase, Ride) -> Unit) = with(ref) {
+private fun changeRideExtraData(ref: Firebase, ride: Ride, fn: (Firebase, Ride) -> Unit) {
     fn(ref, ride)
     fn(ref.trip(ride.trip), ride)
 }
@@ -102,24 +80,64 @@ private fun minMaxWait(ref: Firebase, lmt: Query.(Int) -> Query) = RxFirebase.ge
         .map(::extractRides)
         .map { it[0].waitMinutes }
 
-private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashMap<String, Any>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
+private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashMap<String, *>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
 
 
-private open class FirebaseRepo {
+//class FirebaseModel<T> :T{
+//    var id: String? = null
+//}
+
+var Ride.id by AddFieldDelegate<Ride, String?>(null)
+
+
+abstract class FirebaseRepo internal constructor() : RidesRepo { // CUR use delegation instead https://kotlinlang.org/docs/reference/delegation.html
     protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/")
 }
 
-class FirebaseRidesRepo : FirebaseRepo(), RidesRepo {
-    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
-        throw UnsupportedOperationException()
-    }
-
-    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
-        throw UnsupportedOperationException()
-    }
-
-    override fun addOrUpdate(t: Ride) {
-        throw UnsupportedOperationException()
-    }
-}
+//class FirebaseRidesRepo : FirebaseRepo() {
+//    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
+//        throw UnsupportedOperationException()
+//    }
+//
+//    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
+//        throw UnsupportedOperationException()
+//    }
+//
+//
+//    override fun addOrUpdate(t: Ride) = rideRef(t).onDataLoaded {
+//        if (it.exists()) changeRide(firebase, it.value as Ride, t) else addRide(firebase, t)
+//    }
+//
+//    private fun exists(t: Ride, onNotExists: () -> Unit = {}, onExists: (Ride, Firebase) -> Unit) = t.id?.let { onExists(t, firebase.ride(t.id!!)) } ?: onNotExists()
+//    //    private fun rideRef(ride: Ride) = firebase.ride(ride.id)
+//
+//    private fun addRide(ref: Firebase, ride: Ride) {
+//        with(ref.rides().push()) {
+//            ride.id = this.key
+//            setValue(ride)
+//        }
+//
+//        changeRideExtraData(ref, ride, ::addRideExtraData)
+//    }
+//
+//    private fun removeRide(ref: Firebase, ride: Ride) = exists(ride) { ride, rideRef ->
+//        rideRef.removeValue()
+//        changeRideExtraData(ref, ride, ::removeRideExtraData)
+//    }
+//    //    private fun removeRide(ref: Firebase, ride: Ride) = with(rideRef(ride)) {
+//    //        onDataLoaded {
+//    //            if (it.exists()) {
+//    //                this@with.removeValue()
+//    //                changeRideExtraData(ref, ride, ::removeRideExtraData)
+//    //            }
+//    //        }
+//    //    }
+//
+//    private fun changeRide(ref: Firebase, old: Ride, new: Ride) {
+//        new.id = old.id // make sure we keep the id
+//        rideRef(old).setValue(new)
+//        changeRideExtraData(ref, new, ::addRideExtraData)
+//        changeRideExtraData(ref, old, ::removeRideExtraData)
+//    }
+//}
 

@@ -32,9 +32,18 @@ import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
 import java.util.*
+import kotlin.reflect.KProperty
 
 
 fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
+
+class AddFieldDelegate<T, I>(private val defaultValue: I) {
+    private val fieldMap = HashMap<T, I>()
+
+    operator fun getValue(t: T, property: KProperty<*>) = fieldMap[t]?.apply { } ?: defaultValue
+
+    operator fun setValue(t: T, property: KProperty<*>, any: I) = fieldMap.put(t, any)
+}
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
@@ -51,13 +60,13 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-        for (i in 1..4)
-            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
-
-        removeRide(ref, rides[0])
-        changeRide(ref, rides[1], rides[0])
-        minWait(ref).subscribe { error("AAAAAAmin$it") }
-        maxWait(ref).subscribe { error("AAAAAAmax$it") }
+//        for (i in 1..4)
+//            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+//
+//        removeRide(ref, rides[0])
+//        changeRide(ref, rides[1], rides[0])
+//        minWait(ref).subscribe { error("AAAAAAmin$it") }
+//        maxWait(ref).subscribe { error("AAAAAAmax$it") }
         //    .addListenerForSingleValueEvent(object:ValueEventListener{
         //        override fun onCancelled(p0: FirebaseError?) {
         //            throw UnsupportedOperationException()
@@ -132,17 +141,18 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 }
 
-//data class Car(val name: String)
+data class Car(val name: String)
 //open class Hitch(val trip: String, val waitMinutes: Int)
 
 data class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) {
-    lateinit var id: String
+    //    var id: String? = null
 
     constructor(trip: String, waitMinutes: Int) : this(trip, "", waitMinutes, 0)
 
     fun hasCar() = carMinutes != 0
 }// : Hitch(trip, waitMinutes)
 
+data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
 class GoFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = GoFragmentUI().createView(UI {})
