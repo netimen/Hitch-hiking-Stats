@@ -27,6 +27,10 @@ data class Result<T, E>(val data: T? = null, val error: E? = null) {
     //    }
 }
 
+private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
+
+fun <T, E> Observable<T>.wrapResult(errorInfoFactory: (Throwable) -> E) = compose(wrapResultTransformer<T, E>(errorInfoFactory))
+
 interface Repo<T, E, L : ListParams> {
 
     class Query<L>(val listParams: L, val page: Int = 0, val perPage: Int = 0, val limit: Int = -1)
@@ -115,8 +119,6 @@ fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean,
 
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
-
-fun <T, E> wrapResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
 
 interface MVPView
 

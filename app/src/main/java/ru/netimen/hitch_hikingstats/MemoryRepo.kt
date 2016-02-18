@@ -77,12 +77,12 @@ import java.util.*
 //	at org.gradle.execution.taskgraph.AbstractTaskPlanExecutor$TaskExecutorWorker.run(AbstractTaskPlanExecutor.java:50)
 
 fun dangerousOperation() = 0
+
 fun getErrorMessage(t: Throwable) = "error occurred"
 class A {
     class Result<T, E>(val data: T? = null, val error: E? = null)
 
     fun <T, E> wrapResult(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
-
 
 
     fun test() {
@@ -94,18 +94,7 @@ class A {
 class MemoryRidesRepo : RidesRepo {
     private val rides = HashSet<Ride>()
 
-    class R<T>(val t: T? = null, val e: Throwable? = null)
-
-    //    fun <T> process(): (Observable<T>) -> Observable<R<T>> = { it.map { R(it) } }
-    fun <T> process(): (Observable<T>) -> Observable<R<T>> = { it.map { R(it) }.onErrorReturn { R(e = it) } }
-
-    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
-        //        Observable.just(3).compose(wrapResult<Int, Throwable> { it })
-        Observable.just(3).compose(process())
-        //        throw UnsupportedOperationException()
-        return Observable.just(rides.filter { it.trip == query.listParams.trip }).compose(wrapResult<List<Ride>, ErrorInfo> { ErrorInfo() })
-        //        return Observable.just(rides.filter { it.trip == query.listParams.trip }).compose(wrapResult { ErrorInfo() })
-    }
+    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> = Observable.just(rides.filter { it.trip == query.listParams.trip }).wrapResult { ErrorInfo() }
 
     override fun get(id: String): Observable<Result<Ride, ErrorInfo>> = throw UnsupportedOperationException()
 
