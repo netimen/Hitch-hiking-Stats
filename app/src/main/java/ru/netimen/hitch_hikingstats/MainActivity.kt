@@ -37,12 +37,27 @@ import kotlin.reflect.KProperty
 
 fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
 
+fun String?.notEmpty() = if (isNullOrEmpty()) null else this
+
 class AddFieldDelegate<T, I>(private val defaultValue: I) {
     private val fieldMap = HashMap<T, I>()
 
     operator fun getValue(t: T, property: KProperty<*>) = fieldMap[t]?.apply { } ?: defaultValue
 
     operator fun setValue(t: T, property: KProperty<*>, any: I) = fieldMap.put(t, any)
+}
+
+fun <T> compareLists(list1: List<T>, list2: List<T>): Boolean {
+    if (list1.size != list2.size)
+        return false
+
+    val lll = ArrayList(list2)
+    for (elem in list1) {
+        if (!lll.contains(elem))
+            return false
+        lll.remove(elem)
+    }
+    return true
 }
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
@@ -60,13 +75,23 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-//        for (i in 1..4)
-//            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
-//
-//        removeRide(ref, rides[0])
-//        changeRide(ref, rides[1], rides[0])
-//        minWait(ref).subscribe { error("AAAAAAmin$it") }
-//        maxWait(ref).subscribe { error("AAAAAAmax$it") }
+        val repo = MemoryRidesRepo()
+        for (i in 1..4)
+            repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+
+        (trips + "").forEach { checkRepTrip(repo, rides, it) }
+
+        val rr = rides.removeAt(0)
+        rr.id = "aaaa"
+        repo.remove(rr)
+        checkRepTrip(repo, rides, "")
+        rides.toString()
+        //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+        //
+        //        removeRide(ref, rides[0])
+        //        changeRide(ref, rides[1], rides[0])
+        //        minWait(ref).subscribe { error("AAAAAAmin$it") }
+        //        maxWait(ref).subscribe { error("AAAAAAmax$it") }
         //    .addListenerForSingleValueEvent(object:ValueEventListener{
         //        override fun onCancelled(p0: FirebaseError?) {
         //            throw UnsupportedOperationException()
@@ -138,19 +163,35 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
+    private fun checkRepTrip(repo: MemoryRidesRepo, rides: ArrayList<Ride>, t: String) {
+        repo.getList(Repo.Query(TripListParams(t)))
+                .map { it.data!! }
+                .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
+                .subscribe { error { "AAAAA trip: $t $it" } }
+    }
+
 
 }
 
 data class Car(val name: String)
 //open class Hitch(val trip: String, val waitMinutes: Int)
 
-data class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) {
-    //    var id: String? = null
+interface IdObject {
+    var id: String?
+}
+
+//data class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : I {
+data class Ride internal constructor(override var id: String?, val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : IdObject {
+
+    constructor(trip: String, car: String, waitMinutes: Int, carMinutes: Int) : this(null, trip, car, waitMinutes, carMinutes)
 
     constructor(trip: String, waitMinutes: Int) : this(trip, "", waitMinutes, 0)
 
     fun hasCar() = carMinutes != 0
+
+    fun sameTrip(trip: String?) = trip.notEmpty()?.equals(this.trip) ?: true
 }// : Hitch(trip, waitMinutes)
+
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 

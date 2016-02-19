@@ -172,12 +172,13 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
     }
 }
 
-class TripListParams(val trip: String?) : ListParams
+class TripListParams(val trip: String) : ListParams
 
 class ErrorInfo
 
 interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
 
-//class RidesRepo : Repo<Ride, ErrorInfo, TripListParams> {
-interface RidesRepo : HitchRepo<Ride>
+interface IdRepo<T: IdObject> : HitchRepo<T>
+
+interface RidesRepo : IdRepo<Ride>
 

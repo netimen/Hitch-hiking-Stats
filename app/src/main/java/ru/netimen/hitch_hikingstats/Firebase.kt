@@ -40,9 +40,10 @@ private fun MutableData.initialValue() = if (value == null) 0 else value as Long
 
 private fun Firebase.trips() = child("trips")
 private fun Firebase.trip(key: String) = trips().child(key)
-private fun Firebase.rides() = child("rides")
-private fun Firebase.ride(key: String) = rides().child(key)
+//private fun Firebase.rides() = child("rides")
+//private fun Firebase.ride(key: String) = rides().child(key)
 private fun Firebase.cars() = child("cars")
+
 private fun Firebase.car(key: String) = cars().child(key)
 
 
@@ -87,57 +88,68 @@ private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashM
 //    var id: String? = null
 //}
 
-var Ride.id by AddFieldDelegate<Ride, String?>(null)
+//var Ride.id by AddFieldDelegate<Ride, String?>(null)
 
 
-abstract class FirebaseRepo internal constructor() : RidesRepo { // CUR use delegation instead https://kotlinlang.org/docs/reference/delegation.html
-    protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+// cur thread-safety
+abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> { // CUR use delegation instead https://kotlinlang.org/docs/reference/delegation.html
+    protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/") // cUr support "/test" as main ref
+
+    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
+            .observeSingleValue(objectsRef())
+            .map({ extractObjects(it) })
+            .wrapResult { ErrorInfo() } // cUr errorInfo
+
+    override fun addOrUpdate(t: T) = exists(t, { add(t) }) { ride, rideRef -> change(rideRef, ride, t) }
+
+    override fun remove(t: T) = exists(t) { t, objectRef ->
+        objectRef.removeValue()
+        onRemove(t)
+    }
+
+    protected abstract fun objectsRef(): Firebase
+
+    private fun objectRef(t: T) = t.id?.let { objectsRef().child(it) }
+
+    protected abstract fun extractObject(value: Any): T
+
+    protected fun extractObjects(dataSnapshot: DataSnapshot) = (dataSnapshot.value as Map<String, *>).map { extractObject(it) }
+
+    protected fun add(t: T) = with(objectsRef().push()) { setValue(t.apply { id = key }.let { onAdd(it) }) }
+
+    protected fun change(objectRef: Firebase, old: T, new: T) {
+        new.id = old.id // make sure we keep the id
+        objectRef.setValue(new)
+        onChange(old, new)
+    }
+
+    protected open fun onAdd(it: T) = Unit
+
+    protected open fun onRemove(t: T) = Unit
+
+    protected open fun onChange(old: T, new: T) = Unit
+
+    protected fun exists(t: T, onNotExists: (T) -> Unit = {}, onExists: (T, Firebase) -> Unit) = objectRef(t)?.run {
+        onDataLoaded { if (it.exists()) onExists(extractObject(it.value), this) else onNotExists(t) }
+    } ?: onNotExists(t)
 }
 
-//class FirebaseRidesRepo : FirebaseRepo() {
-//    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
-//        throw UnsupportedOperationException()
-//    }
-//
-//    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
-//        throw UnsupportedOperationException()
-//    }
-//
-//
-//    override fun addOrUpdate(t: Ride) = rideRef(t).onDataLoaded {
-//        if (it.exists()) changeRide(firebase, it.value as Ride, t) else addRide(firebase, t)
-//    }
-//
-//    private fun exists(t: Ride, onNotExists: () -> Unit = {}, onExists: (Ride, Firebase) -> Unit) = t.id?.let { onExists(t, firebase.ride(t.id!!)) } ?: onNotExists()
-//    //    private fun rideRef(ride: Ride) = firebase.ride(ride.id)
-//
-//    private fun addRide(ref: Firebase, ride: Ride) {
-//        with(ref.rides().push()) {
-//            ride.id = this.key
-//            setValue(ride)
-//        }
-//
-//        changeRideExtraData(ref, ride, ::addRideExtraData)
-//    }
-//
-//    private fun removeRide(ref: Firebase, ride: Ride) = exists(ride) { ride, rideRef ->
-//        rideRef.removeValue()
-//        changeRideExtraData(ref, ride, ::removeRideExtraData)
-//    }
-//    //    private fun removeRide(ref: Firebase, ride: Ride) = with(rideRef(ride)) {
-//    //        onDataLoaded {
-//    //            if (it.exists()) {
-//    //                this@with.removeValue()
-//    //                changeRideExtraData(ref, ride, ::removeRideExtraData)
-//    //            }
-//    //        }
-//    //    }
-//
-//    private fun changeRide(ref: Firebase, old: Ride, new: Ride) {
-//        new.id = old.id // make sure we keep the id
-//        rideRef(old).setValue(new)
-//        changeRideExtraData(ref, new, ::addRideExtraData)
-//        changeRideExtraData(ref, old, ::removeRideExtraData)
-//    }
-//}
+class FirebaseRidesRepo : FirebaseRepo<Ride>() {
+    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun onAdd(t: Ride) = changeRideExtraData(firebase, t, ::addRideExtraData)
+
+    override fun onChange(old: Ride, new: Ride) {
+        changeRideExtraData(firebase, new, ::addRideExtraData)
+        changeRideExtraData(firebase, old, ::removeRideExtraData)
+    }
+
+    override fun onRemove(t: Ride) = changeRideExtraData(firebase, t, ::removeRideExtraData)
+
+    override fun extractObject(value: Any): Ride = (value as Map<String, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, (it["waitMinutes"] as Long).toInt(), (it["carMinutes"] as Long).toInt()) }
+
+    override fun objectsRef(): Firebase = firebase.child("rides")
+}
 
