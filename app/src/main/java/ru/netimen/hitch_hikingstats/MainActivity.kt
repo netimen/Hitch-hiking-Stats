@@ -34,7 +34,6 @@ import org.jetbrains.anko.support.v4.viewPager
 import java.util.*
 import kotlin.reflect.KProperty
 
-
 fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
 
 fun String?.notEmpty() = if (isNullOrEmpty()) null else this
@@ -72,23 +71,28 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
         ref.removeValue()
         val ridesRef = ref.child("rides")
-        val trips = arrayOf("Small Trip", "Big Trip", "Middle Trip")
+        val trips = arrayOf("Big Trip", "Middle Trip", "Small Trip")
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-        val repo: RidesRepo = FirebaseRidesRepo()
+        val repo: RideRepo = FirebaseRideRepo()
+        val carRepo: CarRepo = FirebaseCarRepo()
         async() {
             for (i in 1..4)
                 repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
             (trips + "").forEach { checkRepTrip(repo, rides, it) }
+            carRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+            carRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+
             Thread.sleep(2000)
             val rr = rides.removeAt(0)
-            //        rr.id = "aaaa"
             repo.remove(rr)
             Thread.sleep(2000)
+
             checkRepTrip(repo, rides, "")
-            rides.toString()
+            carRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+            carRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
         }
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
@@ -167,7 +171,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
-    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
+    private fun checkRepTrip(repo: RideRepo, rides: ArrayList<Ride>, t: String) {
         repo.getList(Repo.Query(TripListParams(t)))
                 .map { it.data!! }
                 .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
@@ -177,14 +181,12 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 }
 
-data class Car(val name: String)
-//open class Hitch(val trip: String, val waitMinutes: Int)
+data class Car(val name: String, val times: Int)
 
 interface IdObject {
     var id: String?
 }
 
-//data class Ride(val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : I {
 data class Ride internal constructor(override var id: String?, val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : IdObject {
 
     constructor(trip: String, car: String, waitMinutes: Int, carMinutes: Int) : this(null, trip, car, waitMinutes, carMinutes)

@@ -180,5 +180,7 @@ interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
 
 interface IdRepo<T: IdObject> : HitchRepo<T>
 
-interface RidesRepo : IdRepo<Ride>
+interface RideRepo : IdRepo<Ride>
+
+interface CarRepo : HitchRepo<Car>
 

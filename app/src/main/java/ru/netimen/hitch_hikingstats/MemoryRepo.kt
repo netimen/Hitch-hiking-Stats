@@ -11,7 +11,7 @@ import java.util.*
  * Date:   18.02.16
  */
 
-class MemoryRidesRepo : RidesRepo {
+class MemoryRideRepo : RideRepo {
     private val rides = HashSet<Ride>()
 
     override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> = Observable.just(rides.filter { it.sameTrip(query.listParams.trip) }).wrapResult { ErrorInfo(it) }
