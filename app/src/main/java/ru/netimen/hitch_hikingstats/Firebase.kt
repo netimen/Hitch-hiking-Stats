@@ -160,7 +160,7 @@ class FirebaseRideRepo : FirebaseIdRepo<Ride>(), RideRepo {
     override fun tripObjectsRef(trip: String) = objectsRef().orderByChild("trip").equalTo(trip)
 }
 
-class FirebaseCarRepo : FirebaseRepo<Car>(), CarRepo {
+class FirebaseCarRepo : FirebaseRepo<Car>(), CarRepo { // cur can't load cars for trip
     override fun objectsRef(): Firebase = firebase.child("cars")
 
     override fun extractObject(key: String, value: Any) = Car(key, (value as Long).toInt())
