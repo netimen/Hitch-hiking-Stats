@@ -31,7 +31,7 @@ ext.versions = [ // http://stackoverflow.com/a/9547593/190148
                  , kotlin      : '1.0.0'
                  , anko        : '0.8.2'
                  , dagger      : '2.0.2'
-                 , rxBinding   : '0.3.0'
+                 , rxBinding   : '0.4.0'
                  , rxLifecycle : '0.3.0'
                  , fragmentArgs: '3.0.0'
                  , autoParcel  : '0.3.1'

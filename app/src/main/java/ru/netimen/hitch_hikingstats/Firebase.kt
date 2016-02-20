@@ -73,15 +73,15 @@ private fun removeRideExtraData(ref: Firebase, ride: Ride) {
     }
 }
 
-fun minWait(ref: Firebase) = minMaxWait(ref, Query::limitToFirst)
-fun maxWait(ref: Firebase) = minMaxWait(ref, Query::limitToLast)
+//fun minWait(ref: Firebase) = minMaxWait(ref, Query::limitToFirst)
+//fun maxWait(ref: Firebase) = minMaxWait(ref, Query::limitToLast)
 
-private fun minMaxWait(ref: Firebase, lmt: Query.(Int) -> Query) = RxFirebase.getInstance()
-        .observeSingleValue(ref.child("rides").orderByChild("waitMinutes").lmt(1))
-        .map(::extractRides)
-        .map { it[0].waitMinutes }
+//private fun minMaxWait(ref: Firebase, lmt: Query.(Int) -> Query) = RxFirebase.getInstance()
+//        .observeSingleValue(ref.child("rides").orderByChild("waitMinutes").lmt(1))
+//        .map(::extractRides)
+//        .map { it[0].waitMinutes }
 
-private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, HashMap<String, *>>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
+//private fun extractRides(it: DataSnapshot) = (it?.value as HashMap<String, *>).map { it -> Ride(it.value["trip"] as String, it.value["car"] as String, (it.value["waitMinutes"] as Long).toInt(), (it.value["carMinutes"]as Long).toInt()) }
 
 
 //class FirebaseModel<T> :T{
@@ -96,9 +96,9 @@ abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> 
     protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/") // cUr support "/test" as main ref
 
     override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
-            .observeSingleValue(objectsRef())
+            .observeSingleValue(query.listParams.trip.notEmpty()?.let { objectsRef().orderByChild("trip").equalTo(it) } ?: objectsRef())
             .map({ extractObjects(it) })
-            .wrapResult { ErrorInfo() } // cUr errorInfo
+            .wrapResult { ErrorInfo(it) }
 
     override fun addOrUpdate(t: T) = exists(t, { add(t) }) { ride, rideRef -> change(rideRef, ride, t) }
 
@@ -113,9 +113,12 @@ abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> 
 
     protected abstract fun extractObject(value: Any): T
 
-    protected fun extractObjects(dataSnapshot: DataSnapshot) = (dataSnapshot.value as Map<String, *>).map { extractObject(it) }
+    protected fun extractObjects(dataSnapshot: DataSnapshot) = (dataSnapshot.value as? Map<*, *>)?.map { extractObject(it.value!!) } ?: ArrayList()
 
-    protected fun add(t: T) = with(objectsRef().push()) { setValue(t.apply { id = key }.let { onAdd(it) }) }
+    protected fun add(t: T) = with(objectsRef().push()) {
+        setValue(t.apply { id = key })
+        onAdd(t)
+    }
 
     protected fun change(objectRef: Firebase, old: T, new: T) {
         new.id = old.id // make sure we keep the id
@@ -123,7 +126,7 @@ abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> 
         onChange(old, new)
     }
 
-    protected open fun onAdd(it: T) = Unit
+    protected open fun onAdd(t: T) = Unit
 
     protected open fun onRemove(t: T) = Unit
 
@@ -134,7 +137,7 @@ abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> 
     } ?: onNotExists(t)
 }
 
-class FirebaseRidesRepo : FirebaseRepo<Ride>() {
+class FirebaseRidesRepo : FirebaseRepo<Ride>(), RidesRepo {
     override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
         throw UnsupportedOperationException()
     }
@@ -148,7 +151,7 @@ class FirebaseRidesRepo : FirebaseRepo<Ride>() {
 
     override fun onRemove(t: Ride) = changeRideExtraData(firebase, t, ::removeRideExtraData)
 
-    override fun extractObject(value: Any): Ride = (value as Map<String, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, (it["waitMinutes"] as Long).toInt(), (it["carMinutes"] as Long).toInt()) }
+    override fun extractObject(value: Any): Ride = (value as Map<*, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, (it["waitMinutes"] as Long).toInt(), (it["carMinutes"] as Long).toInt()) }
 
     override fun objectsRef(): Firebase = firebase.child("rides")
 }

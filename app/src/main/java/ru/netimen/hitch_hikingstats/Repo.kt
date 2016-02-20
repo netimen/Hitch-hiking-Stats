@@ -174,7 +174,7 @@ open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase
 
 class TripListParams(val trip: String) : ListParams
 
-class ErrorInfo
+class ErrorInfo(val t: Throwable)
 
 interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
 

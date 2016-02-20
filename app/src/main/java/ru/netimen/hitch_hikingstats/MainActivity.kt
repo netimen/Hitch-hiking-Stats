@@ -75,17 +75,17 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-        val repo = MemoryRidesRepo()
+        val repo: RidesRepo = FirebaseRidesRepo()
         for (i in 1..4)
             repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
         (trips + "").forEach { checkRepTrip(repo, rides, it) }
 
-        val rr = rides.removeAt(0)
-        rr.id = "aaaa"
-        repo.remove(rr)
-        checkRepTrip(repo, rides, "")
-        rides.toString()
+                val rr = rides.removeAt(0)
+                rr.id = "aaaa"
+                repo.remove(rr)
+                checkRepTrip(repo, rides, "")
+                rides.toString()
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
         //        removeRide(ref, rides[0])
@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
-    private fun checkRepTrip(repo: MemoryRidesRepo, rides: ArrayList<Ride>, t: String) {
+    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
         repo.getList(Repo.Query(TripListParams(t)))
                 .map { it.data!! }
                 .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
