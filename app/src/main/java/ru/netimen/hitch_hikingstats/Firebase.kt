@@ -97,6 +97,7 @@ abstract class FirebaseRepo<T : IdObject> internal constructor() : HitchRepo<T> 
 
     override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
             .observeSingleValue(query.listParams.trip.notEmpty()?.let { objectsRef().orderByChild("trip").equalTo(it) } ?: objectsRef())
+            .first() // RxFirebase observeSingleValue has a bug https://github.com/spirosoik/Android-RxFirebase/issues/2
             .map({ extractObjects(it) })
             .wrapResult { ErrorInfo(it) }
 

@@ -47,20 +47,21 @@ class AddFieldDelegate<T, I>(private val defaultValue: I) {
     operator fun setValue(t: T, property: KProperty<*>, any: I) = fieldMap.put(t, any)
 }
 
-fun <T> compareLists(list1: List<T>, list2: List<T>): Boolean {
-    if (list1.size != list2.size)
-        return false
-
-    val lll = ArrayList(list2)
-    for (elem in list1) {
-        if (!lll.contains(elem))
-            return false
-        lll.remove(elem)
-    }
-    return true
-}
-
 class MainActivity : AppCompatActivity(), AnkoLogger {
+
+    fun <T> compareLists(list1: List<T>, list2: List<T>): Boolean {
+        warn { "BBBB ${list1.size} ${list2.size}" }
+        if (list1.size != list2.size)
+            return false
+
+        val lll = ArrayList(list2)
+        for (elem in list1) {
+            if (!lll.contains(elem))
+                return false
+            lll.remove(elem)
+        }
+        return true
+    }
 
     //CUR authenticate
     //CUR paginated loading
@@ -76,16 +77,19 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val r = Random()
         val rides = ArrayList<Ride>()
         val repo: RidesRepo = FirebaseRidesRepo()
-        for (i in 1..4)
-            repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+        async() {
+            for (i in 1..4)
+                repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
-        (trips + "").forEach { checkRepTrip(repo, rides, it) }
-
-                val rr = rides.removeAt(0)
-                rr.id = "aaaa"
-                repo.remove(rr)
-                checkRepTrip(repo, rides, "")
-                rides.toString()
+            (trips + "").forEach { checkRepTrip(repo, rides, it) }
+            Thread.sleep(2000)
+            val rr = rides.removeAt(0)
+            //        rr.id = "aaaa"
+            repo.remove(rr)
+            Thread.sleep(2000)
+            checkRepTrip(repo, rides, "")
+            rides.toString()
+        }
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
         //        removeRide(ref, rides[0])
@@ -128,7 +132,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             }
 
             override fun onChildAdded(p0: DataSnapshot?, p1: String?) {
-                error("AAAAAddd${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
+                error("CCC ${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
             }
 
             override fun onChildRemoved(p0: DataSnapshot?) {
@@ -167,7 +171,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         repo.getList(Repo.Query(TripListParams(t)))
                 .map { it.data!! }
                 .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
-                .subscribe { error { "AAAAA trip: $t $it" } }
+                .subscribe { error { "AAAAA check trip: $t $it" } }
     }
 
 
