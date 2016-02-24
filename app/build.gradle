@@ -51,6 +51,7 @@ dependencies {
 
     compile deps.rxKotlin
 //    compile deps.rxBinding
+    compile deps.rxAndroid
 
     compile deps.firebase
 

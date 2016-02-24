@@ -46,7 +46,7 @@ ext.deps = [
 //
         , rxKotlin     : 'io.reactivex:rxkotlin:0.40.1'
 //        , rxJava               : 'io.reactivex:rxjava:1.0.17'
-//        , rxAndroid            : 'io.reactivex:rxandroid:1.0.1'
+        , rxAndroid    : 'io.reactivex:rxandroid:1.1.0'
         , rxBinding    : 'com.jakewharton.rxbinding:rxbinding-kotlin:' + versions.rxBinding
 //        , rxBindingV4          : 'com.jakewharton.rxbinding:rxbinding-support-v4:' + versions.rxBinding
 //        , rxBindingRecycler    : 'com.jakewharton.rxbinding:rxbinding-recyclerview-v7:' + versions.rxBinding
@@ -59,9 +59,9 @@ ext.deps = [
         , kotlinPlugin : 'org.jetbrains.kotlin:kotlin-gradle-plugin:' + versions.kotlin
 
         , anko         : 'org.jetbrains.anko:anko-sdk21:' + versions.anko
-        , ankoV4: 'org.jetbrains.anko:anko-support-v4:' + versions.anko
-        , ankoDesign: 'org.jetbrains.anko:anko-design:' + versions.anko
-        , ankoRecycler: 'org.jetbrains.anko:anko-recyclerview-v7:' + versions.anko
+        , ankoV4       : 'org.jetbrains.anko:anko-support-v4:' + versions.anko
+        , ankoDesign   : 'org.jetbrains.anko:anko-design:' + versions.anko
+        , ankoRecycler : 'org.jetbrains.anko:anko-recyclerview-v7:' + versions.anko
 
         , supportDesign: 'com.android.support:design:' + versions.support
 //        , firebase     : 'com.firebase:firebase-client-android:2.5.0'
