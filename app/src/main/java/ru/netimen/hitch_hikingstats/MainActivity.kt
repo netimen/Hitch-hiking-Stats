@@ -14,10 +14,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import com.firebase.client.ChildEventListener
 import com.firebase.client.DataSnapshot
 import com.firebase.client.Firebase
@@ -75,15 +72,15 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
         val r = Random()
         val rides = ArrayList<Ride>()
-        val repo: RideRepo = FirebaseRideRepo()
-        val carRepo: CarRepo = FirebaseCarRepo()
+        val repo: RidesRepo = FirebaseRidesRepo()
+        val carsRepo: CarsRepo = FirebaseCarsRepo()
         async() {
             for (i in 1..4)
                 repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
 
             (trips + "").forEach { checkRepTrip(repo, rides, it) }
-            carRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-            carRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
 
             Thread.sleep(2000)
             val rr = rides.removeAt(0)
@@ -91,8 +88,8 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             Thread.sleep(2000)
 
             checkRepTrip(repo, rides, "")
-            carRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-            carRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
         }
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
@@ -161,7 +158,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         ui.setContentView(this)
         val tabsTitles = stringArray(R.array.trip_tabs)
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
-            override fun getItem(position: Int): Fragment? = if (position == 0) GoFragment() else ListFragment()
+            override fun getItem(position: Int): Fragment? = if (position == 0) GoFragment() else RidesFragment()
 
 
             override fun getCount(): Int = tabsTitles.size
@@ -171,7 +168,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
-    private fun checkRepTrip(repo: RideRepo, rides: ArrayList<Ride>, t: String) {
+    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
         repo.getList(Repo.Query(TripListParams(t)))
                 .map { it.data!! }
                 .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
@@ -201,13 +198,53 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
+class RidesFragment : ListFragment<Ride>() {
+    private var presenter = RidesPresenter()
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        presenter.attachView(this)
+    }
+}
+
+class RidesPresenter : PagingPresenter<Ride, ErrorInfo, RidesFragment>(GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20))
+
+
 class GoFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = GoFragmentUI().createView(UI {})
 }
 
-class ListFragment : Fragment() {
+open class ListFragment<T> : Fragment(), PagingView<T, ErrorInfo> {
     lateinit var list: RecyclerView
     lateinit var add: View
+    lateinit var loader: ProgressBar
+
+    override fun showLoading() {
+        loader.visibility = View.VISIBLE
+        list.visibility = View.GONE
+    }
+
+    override fun showData(data: List<T>) {
+        loader.visibility = View.GONE
+        list.visibility = View.VISIBLE
+        //        list.adapter=
+    }
+
+    override fun showNoData() {
+        throw UnsupportedOperationException()
+    }
+
+    override fun showError(error: ErrorInfo) {
+        throw UnsupportedOperationException()
+    }
+
+    override fun showLoadingNextPage() {
+        throw UnsupportedOperationException()
+    }
+
+    override fun showErrorNextPage() {
+        throw UnsupportedOperationException()
+    }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
         frameLayout {
@@ -215,15 +252,16 @@ class ListFragment : Fragment() {
             recyclerView {
                 list = this
                 layoutManager = LinearLayoutManager(ctx)
-                adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-                    override fun getItemCount(): Int = 100
-
-                    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx).apply { text = "ccc" }) {}
-
-                    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int): Unit {
-                    }
-                }
+                //                adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                //                    override fun getItemCount(): Int = 100
+                //
+                //                    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx).apply { text = "ccc" }) {}
+                //
+                //                    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int): Unit {
+                //                    }
+                //                }
             }
+            loader = progressBar()
             add = floatingActionButton {
                 imageResource = R.drawable.ic_add
             }.lparams {

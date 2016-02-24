@@ -90,8 +90,8 @@ private fun removeRideExtraData(ref: Firebase, ride: Ride) {
 
 
 // cur thread-safety
-abstract class FirebaseRepo<T> internal constructor() : HitchRepo<T> {
-    protected val firebase = Firebase("https://dazzling-heat-4079.firebaseio.com/") // cUr support "/test" as main ref
+abstract class FirebaseRepo<T> internal constructor(url: String) : HitchRepo<T> {
+    protected val firebase = Firebase(url)
 
     override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
             .observeSingleValue(query.listParams.trip.notEmpty()?.let { tripObjectsRef(it) } ?: objectsRef())
@@ -99,18 +99,20 @@ abstract class FirebaseRepo<T> internal constructor() : HitchRepo<T> {
             .map({ extractObjects(it) })
             .wrapResult { ErrorInfo(it) }
 
-    protected open fun tripObjectsRef(trip: String): Query = objectsRef().child(trip)
+    protected open fun tripObjectsRef(trip: String): Query = objectsRef(firebase.trip(trip))
 
     override fun get(id: String): Observable<Result<T, ErrorInfo>> = throw UnsupportedOperationException()
 
-    protected abstract fun objectsRef(): Firebase
+    protected abstract fun objectsRef(root: Firebase): Firebase
+
+    protected fun objectsRef() = objectsRef(firebase)
 
     protected fun extractObjects(dataSnapshot: DataSnapshot) = (dataSnapshot.value as? Map<String, *>)?.map { extractObject(it.key, it.value!!) } ?: ArrayList()
 
     protected abstract fun extractObject(key: String, value: Any): T
 }
 
-abstract class FirebaseIdRepo<T : IdObject> internal constructor() : FirebaseRepo<T>() {
+abstract class FirebaseIdRepo<T : IdObject> internal constructor(url: String) : FirebaseRepo<T>(url) {
 
     override fun addOrUpdate(t: T) = exists(t, { add(t) }) { ride, rideRef -> change(rideRef, ride, t) }
 
@@ -143,7 +145,9 @@ abstract class FirebaseIdRepo<T : IdObject> internal constructor() : FirebaseRep
     } ?: onNotExists(t)
 }
 
-class FirebaseRideRepo : FirebaseIdRepo<Ride>(), RideRepo {
+class FirebaseRidesRepo(url: String) : FirebaseIdRepo<Ride>(url), RidesRepo {
+    constructor() : this(URL)
+
     override fun onAdd(t: Ride) = changeRideExtraData(firebase, t, ::addRideExtraData)
 
     override fun onChange(old: Ride, new: Ride) {
@@ -155,13 +159,15 @@ class FirebaseRideRepo : FirebaseIdRepo<Ride>(), RideRepo {
 
     override fun extractObject(key: String, value: Any) = (value as Map<*, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, (it["waitMinutes"] as Long).toInt(), (it["carMinutes"] as Long).toInt()) }
 
-    override fun objectsRef(): Firebase = firebase.child("rides")
+    override fun objectsRef(root: Firebase): Firebase = root.child("rides")
 
     override fun tripObjectsRef(trip: String) = objectsRef().orderByChild("trip").equalTo(trip)
 }
 
-class FirebaseCarRepo : FirebaseRepo<Car>(), CarRepo { // cur can't load cars for trip
-    override fun objectsRef(): Firebase = firebase.child("cars")
+class FirebaseCarsRepo(url: String) : FirebaseRepo<Car>(url), CarsRepo {
+    constructor() : this(URL)
+
+    override fun objectsRef(root: Firebase): Firebase = root.child("cars")
 
     override fun extractObject(key: String, value: Any) = Car(key, (value as Long).toInt())
 
@@ -169,3 +175,7 @@ class FirebaseCarRepo : FirebaseRepo<Car>(), CarRepo { // cur can't load cars fo
 
     override fun remove(t: Car) = throw UnsupportedOperationException()
 }
+
+private val URL = "https://dazzling-heat-4079.firebaseio.com/" // cUr support "/test" as main ref
+
+

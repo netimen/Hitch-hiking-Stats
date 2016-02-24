@@ -1,8 +1,8 @@
 package ru.netimen.hitch_hikingstats
 
-import android.support.annotation.CallSuper
 import rx.Observable
 import rx.Subscription
+import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 import java.util.*
@@ -51,7 +51,7 @@ interface SchedulingStrategy<T> : Observable.Transformer<T, T> {
     companion object Factory {
 
         fun <T> ioMain() = object : SchedulingStrategy<T> {
-            override fun call(p0: Observable<T>?): Observable<T>? = p0?.observeOn(Schedulers.io())?.subscribeOn(Schedulers.io())
+            override fun call(p0: Observable<T>?): Observable<T>? = p0?.observeOn(AndroidSchedulers.mainThread())?.subscribeOn(Schedulers.io())
         }
 
         fun <T> justThisThread() = object : SchedulingStrategy<T> {
@@ -77,7 +77,7 @@ open class GetUseCase<T, E, R : Repo<T, E, ListParams>>(repo: R, protected val u
     override fun useCaseObservable(): Observable<Result<T, E>> = repo.get(uuid)
 }
 
-abstract class GetListUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, protected val listParams: L, protected val perPage: Int) : RepoUseCase<List<T>, E, R>(repo) {
+open class GetListUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, protected val listParams: L, protected val perPage: Int) : RepoUseCase<List<T>, E, R>(repo) {
     protected var page: Int = 0
 
     override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getList(Repo.Query(listParams, page, perPage))
@@ -136,28 +136,41 @@ interface PagingView<T, E> : DataView<List<T>, E> {
 
 abstract class Presenter<V : MVPView> {
     private val allSubscriptions = CompositeSubscription()
+    private var attachCount = 0
     protected var view: V? = null
 
     fun isViewAttached() = view != null
 
-    fun assertViewAttached() = view.onNull { throw IllegalStateException("A View must be attached to this presenter to access the view property") }
+    protected fun assertViewAttached() = view.onNull { throw IllegalStateException("A View must be attached to this presenter to access the view property") }
 
-    @CallSuper
-    fun onAttachView(view: V): Unit {
+    fun attachView(view: V) {
         this.view = view
+        if (attachCount++ == 0)
+            onFirstAttach()
+
+        onAttachView()
     }
+
+    fun detachView() {
+        view = null
+        allSubscriptions.clear()
+        onDetachView()
+    }
+
+    protected open fun onAttachView() = Unit
+
+    protected open fun onFirstAttach() = Unit
+
+    protected open fun onDetachView() = Unit
 
     protected fun unsubscribeOnDetach(s: Subscription) = allSubscriptions.add(s)
 
-    @CallSuper
-    fun onDetachView() {
-        view = null
-        allSubscriptions.clear()
-    }
 }
 
 open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>() {
     protected val objects = ArrayList<T>()
+
+    override fun onFirstAttach() = load()
 
     fun load() {
         assertViewAttached()
@@ -178,9 +191,9 @@ class ErrorInfo(val t: Throwable)
 
 interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
 
-interface IdRepo<T: IdObject> : HitchRepo<T>
+interface IdRepo<T : IdObject> : HitchRepo<T>
 
-interface RideRepo : IdRepo<Ride>
+interface RidesRepo : IdRepo<Ride>
 
-interface CarRepo : HitchRepo<Car>
+interface CarsRepo : HitchRepo<Car>
 
