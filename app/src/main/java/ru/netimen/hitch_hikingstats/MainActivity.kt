@@ -24,10 +24,9 @@ import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
 import org.jetbrains.anko.recyclerview.v7.recyclerView
-import org.jetbrains.anko.support.v4.UI
-import org.jetbrains.anko.support.v4._DrawerLayout
-import org.jetbrains.anko.support.v4.drawerLayout
-import org.jetbrains.anko.support.v4.viewPager
+import org.jetbrains.anko.support.v4.*
+import rx.Subscription
+import rx.subscriptions.CompositeSubscription
 import java.util.*
 import kotlin.reflect.KProperty
 
@@ -198,13 +197,8 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
-class RidesFragment : ListFragment<Ride>() {
-    private var presenter = RidesPresenter()
-
-    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        presenter.attachView(this)
-    }
+class RidesFragment : ListFragment<Ride, RidesPresenter>() {
+    override var presenter = RidesPresenter()
 }
 
 class RidesPresenter : PagingPresenter<Ride, ErrorInfo, RidesFragment>(GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20))
@@ -214,7 +208,16 @@ class GoFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = GoFragmentUI().createView(UI {})
 }
 
-open class ListFragment<T> : Fragment(), PagingView<T, ErrorInfo> {
+abstract class MvpFragment<P : Presenter<in MvpFragment<P>>> : Fragment(), MvpView {
+    protected abstract val presenter: P
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        presenter.attachView(this)
+    }
+}
+
+abstract class ListFragment<T, P : Presenter<in ListFragment<T, P>>> : MvpFragment<P>(), PagingView<T, ErrorInfo> {
     lateinit var list: RecyclerView
     lateinit var add: View
     lateinit var loader: ProgressBar
@@ -227,7 +230,15 @@ open class ListFragment<T> : Fragment(), PagingView<T, ErrorInfo> {
     override fun showData(data: List<T>) {
         loader.visibility = View.GONE
         list.visibility = View.VISIBLE
-        //        list.adapter=
+        list.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            override fun getItemCount(): Int = data.size
+
+            override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx)) {}
+
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
+                (holder?.itemView as TextView).text = data[position].toString()
+            }
+        }
     }
 
     override fun showNoData() {
@@ -252,14 +263,14 @@ open class ListFragment<T> : Fragment(), PagingView<T, ErrorInfo> {
             recyclerView {
                 list = this
                 layoutManager = LinearLayoutManager(ctx)
-                //                adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-                //                    override fun getItemCount(): Int = 100
+                //                                adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                //                                    override fun getItemCount(): Int = 100
                 //
-                //                    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx).apply { text = "ccc" }) {}
+                //                                    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx).apply { text = "ccc" }) {}
                 //
-                //                    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int): Unit {
-                //                    }
-                //                }
+                //                                    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int): Unit {
+                //                                    }
+                //                                }
             }
             loader = progressBar()
             add = floatingActionButton {
@@ -402,4 +413,5 @@ class MainActivityUI : AnkoComponent<MainActivity> {
 
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
+
 

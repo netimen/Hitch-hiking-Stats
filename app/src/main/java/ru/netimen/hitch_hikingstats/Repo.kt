@@ -120,9 +120,9 @@ fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean,
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
 
-interface MVPView
+interface MvpView
 
-interface DataView<T, E> : MVPView {
+interface DataView<T, E> : MvpView {
     fun showLoading()
     fun showData(data: T)
     fun showNoData()
@@ -134,7 +134,7 @@ interface PagingView<T, E> : DataView<List<T>, E> {
     fun showErrorNextPage()
 }
 
-abstract class Presenter<V : MVPView> {
+abstract class Presenter<V : MvpView> {
     private val allSubscriptions = CompositeSubscription()
     private var attachCount = 0
     protected var view: V? = null
