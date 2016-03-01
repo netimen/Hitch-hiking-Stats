@@ -30,18 +30,18 @@ abstract class Presenter<V : MvpView> {
 
 }
 
-abstract class BaseView<P : Presenter<in BaseView<P>>> : MvpView {
-    protected abstract val presenter: P
-
-    constructor() {
-        presenter.attachView(this)
-    }
-}
-
-class AP : Presenter<BV>()
-class BV : BaseView<Presenter<BV>>() {
-    override val presenter = AP()
-}
+//abstract class BaseView<P : Presenter<in BaseView<P>>> : MvpView {
+//    protected abstract val presenter: P
+//
+//    constructor() {
+//        presenter.attachView(this)
+//    }
+//}
+//
+//class AP : Presenter<BV>()
+//class BV : BaseView<Presenter<BV>>() {
+//    override val presenter = AP()
+//}
 
 //abstract class AF<P : Presenter<AF<P>>> : Fragment(), MvpView<P> {
 ////    abstract override val presenter: P
@@ -55,19 +55,38 @@ class BV : BaseView<Presenter<BV>>() {
 //class AP : Presenter<AF<AP>>()
 //class AAF : AF<AP>()
 
-abstract class MvpFragment<P : Presenter<out MvpFragment<P>>> : Fragment(), MvpView {
+interface ViewImpl<V : MvpView> : MvpView
+
+abstract class MvpFragment<P : Presenter<in V>, V : MvpFragment<P, V>> : Fragment(), MvpView {
     protected abstract val presenter: P
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        presenter.attachView(this)
+        presenter.attachView(this as V)
     }
 }
 
-//
-class RP : Presenter<AAAF>()
+interface AV : MvpView {
+    fun showA()
+}
 
-abstract class AAAF : MvpFragment<Presenter<AAAF>>()
+class AP : Presenter<AV>() {
+    fun loadA() = throw UnsupportedOperationException()
+}
+
+class AF : MvpFragment<AP, AF>(), AV {
+    override val presenter: AP
+        get() = throw UnsupportedOperationException()
+
+    override fun showA() {
+        throw UnsupportedOperationException()
+    }
+
+}
+//
+//class RP : Presenter<AAAF>()
+//
+//abstract class AAAF : MvpFragment<Presenter<AAAF>>()
 //abstract class AAAF2 : MvpFragment<RP>()
 
 
@@ -78,8 +97,24 @@ abstract class AAAF : MvpFragment<Presenter<AAAF>>()
 //}
 
 fun test(a: Presenter<out MvpView>) {
-    val b: MvpView = a.getView2()
-    val c: Presenter<out MvpFragment<Presenter<AAAF>>> = RP()
+    //    val b: MvpView = a.getView2()
+    //    val c: Presenter<out MvpFragment<Presenter<AAAF>>> = RP()
     //    a.vi
     //    val a: MvpFragment<Presenter<MvpFragment>>
+}
+
+class test2 : test() {
+    //   override var a : Int = 0
+//        override val item  = 0
+    val item
+        get() = super.item
+    fun test() {
+        item
+    }
+}
+
+open class A(open val a: Int)
+
+class B : A(0) {
+    override val a : Int = super.a
 }

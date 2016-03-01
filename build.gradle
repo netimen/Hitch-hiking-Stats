@@ -27,7 +27,7 @@ ext.versions = [ // http://stackoverflow.com/a/9547593/190148
                  , targetSdk   : 23
                  , minSdk      : 21
                  , buildTools  : '23.0.2'
-                 , support     : '23.1.1'
+                 , support     : '23.2.0'
                  , kotlin      : '1.0.0'
                  , anko        : '0.8.2'
                  , dagger      : '2.0.2'

@@ -20,11 +20,6 @@ interface ListParams
 data class Result<T, E>(val data: T? = null, val error: E? = null) {
 
     fun isSuccessful(): Boolean = data != null
-
-    //    companion object Factory {
-    //        fun <T, E> success(result: T) = Result(result, null as E)
-    //        fun <T, E> error(error: E) = Result(null as T, error)
-    //    }
 }
 
 private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
@@ -120,70 +115,7 @@ fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean,
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
 
-interface MvpView
-
-interface DataView<T, E> : MvpView {
-    fun showLoading()
-    fun showData(data: T)
-    fun showNoData()
-    fun showError(error: E)
-}
-
-interface PagingView<T, E> : DataView<List<T>, E> {
-    fun showLoadingNextPage()
-    fun showErrorNextPage()
-}
-
-abstract class Presenter<V : MvpView> {
-    private val allSubscriptions = CompositeSubscription()
-    private var attachCount = 0
-    protected var view: V? = null
-
-    fun isViewAttached() = view != null
-
-    protected fun assertViewAttached() = view.onNull { throw IllegalStateException("A View must be attached to this presenter to access the view property") }
-
-    fun attachView(view: V) {
-        this.view = view
-        if (attachCount++ == 0)
-            onFirstAttach()
-
-        onAttachView()
-    }
-
-    fun detachView() {
-        view = null
-        allSubscriptions.clear()
-        onDetachView()
-    }
-
-    protected open fun onAttachView() = Unit
-
-    protected open fun onFirstAttach() = Unit
-
-    protected open fun onDetachView() = Unit
-
-    protected fun unsubscribeOnDetach(s: Subscription) = allSubscriptions.add(s)
-
-}
-
-open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>() {
-    protected val objects = ArrayList<T>()
-
-    override fun onFirstAttach() = load()
-
-    fun load() {
-        assertViewAttached()
-
-        view?.showLoading()
-
-        unsubscribeOnDetach(LoadObservable(loadUseCase.execute())
-                .onError { view?.showError(it) }
-                .onData { view?.showData(objects.apply { addAll(it) }) }
-                .onNoData { view?.showNoData() }
-                .subscribe()) // CUR show unexpected error
-    }
-}
+// CUR move
 
 class TripListParams(val trip: String) : ListParams
 

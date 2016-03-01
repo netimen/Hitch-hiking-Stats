@@ -10,23 +10,19 @@ import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import com.firebase.client.ChildEventListener
 import com.firebase.client.DataSnapshot
 import com.firebase.client.Firebase
 import com.firebase.client.FirebaseError
 import org.jetbrains.anko.*
+import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.*
-import rx.Subscription
-import rx.subscriptions.CompositeSubscription
 import java.util.*
 import kotlin.reflect.KProperty
 
@@ -157,7 +153,14 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         ui.setContentView(this)
         val tabsTitles = stringArray(R.array.trip_tabs)
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
-            override fun getItem(position: Int): Fragment? = if (position == 0) GoFragment() else RidesFragment()
+            override fun getItem(position: Int): Fragment? = when (position) {
+                0 -> GoFragment()
+                1 -> RidesFragment()
+                2 -> CarsFragment()
+                else -> {
+                    CarsFragment()
+                }
+            }
 
 
             override fun getCount(): Int = tabsTitles.size
@@ -197,46 +200,57 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
-class RidesFragment : ListFragment<Ride, RidesPresenter>() {
-    override var presenter = RidesPresenter()
+class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, TextView>() {
+    override var presenter = RidesPresenter() // CUR make base fragment instantiate presenter
 }
 
 class RidesPresenter : PagingPresenter<Ride, ErrorInfo, RidesFragment>(GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20))
 
+class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() {
+    override var presenter = CarsPresenter()
+}
+
+class CarsPresenter : PagingPresenter<Car, ErrorInfo, CarsFragment>(GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))
 
 class GoFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = GoFragmentUI().createView(UI {})
 }
 
-abstract class MvpFragment<P : Presenter<in MvpFragment<P>>> : Fragment(), MvpView {
+abstract class MvpFragment<P : Presenter<in V>, V : MvpFragment<P, V>> : Fragment(), MvpView {
     protected abstract val presenter: P
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        presenter.attachView(this)
+        presenter.attachView(this as V)
     }
 }
 
-abstract class ListFragment<T, P : Presenter<in ListFragment<T, P>>> : MvpFragment<P>(), PagingView<T, ErrorInfo> {
-    lateinit var list: RecyclerView
-    lateinit var add: View
-    lateinit var loader: ProgressBar
+class ViewHolder<V : View>(itemView: V) : RecyclerView.ViewHolder(itemView) {
+    val view = super.itemView as V
+}
 
-    override fun showLoading() {
-        loader.visibility = View.VISIBLE
-        list.visibility = View.GONE
-    }
+abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, ItemView>, ItemView : View> : MvpFragment<P, V>(), PagingView<T, ErrorInfo> {
+    lateinit var list: RecyclerView
+    //    lateinit var add: View
+    lateinit var loader: ProgressBar
+    lateinit var container: OneVisibleChildLayout // CUR dataLayout
+
+    override fun showLoading() = container.showChild(loader)
 
     override fun showData(data: List<T>) {
-        loader.visibility = View.GONE
-        list.visibility = View.VISIBLE
-        list.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        container.showChild(list)
+        list.adapter = createAdapter(data)
+        ViewHolder(TextView(context)).itemView
+    }
+
+    protected open fun createAdapter(data: List<T>): RecyclerView.Adapter<ViewHolder<ItemView>> {
+        return object : RecyclerView.Adapter<ViewHolder<ItemView>>() {
             override fun getItemCount(): Int = data.size
 
-            override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx)) {}
+            override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder<ItemView>? = ViewHolder(TextView(ctx))
 
-            override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
-                (holder?.itemView as TextView).text = data[position].toString()
+            override fun onBindViewHolder(holder: ViewHolder<ItemView>?, position: Int) {
+                holder?.view.text = data[position].toString()
             }
         }
     }
@@ -258,7 +272,7 @@ abstract class ListFragment<T, P : Presenter<in ListFragment<T, P>>> : MvpFragme
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
-        frameLayout {
+        this@ListFragment.container = oneVisibleChildLayout {
 
             recyclerView {
                 list = this
@@ -273,12 +287,12 @@ abstract class ListFragment<T, P : Presenter<in ListFragment<T, P>>> : MvpFragme
                 //                                }
             }
             loader = progressBar()
-            add = floatingActionButton {
-                imageResource = R.drawable.ic_add
-            }.lparams {
-                gravity = Gravity.RIGHT or Gravity.BOTTOM
-                margin = dimen(R.dimen.margin_big)
-            }
+//                        floatingActionButton {
+//                            imageResource = R.drawable.ic_add
+//                        }.lparams {
+//                            gravity = Gravity.RIGHT or Gravity.BOTTOM
+//                            margin = dimen(R.dimen.margin_big)
+//                        }
         }
     }.view
 }
@@ -409,9 +423,9 @@ class MainActivityUI : AnkoComponent<MainActivity> {
     }
 }
 
-//fun ViewManager.floatingActionButton(init: FloatingActionButton.() -> Unit = {}) = ankoView({ FloatingActionButton(it) }, init) // https://gist.github.com/cnevinc/539d6659a4afbf6a0b08
+class _OneVisibleChildLayout(ctx: Context) : OneVisibleChildLayout(ctx), _FrameLayout
+fun ViewManager.oneVisibleChildLayout(init: _OneVisibleChildLayout.() -> Unit = {})= ankoView({ _OneVisibleChildLayout(it) }, init) // https://gist.github.com/cnevinc/539d6659a4afbf6a0b08
 
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
-
 

@@ -8,6 +8,8 @@
 package ru.netimen.hitch_hikingstats.test;
 
 public class test {
+//    public Integer a;
+    public Integer getItem() {return 0;}
     interface MvpView {
     }
 
