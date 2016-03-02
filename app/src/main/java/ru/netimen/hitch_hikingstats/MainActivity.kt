@@ -256,7 +256,7 @@ abstract class SimpleListAdapter<T, ItemView : View> : RecyclerView.Adapter<View
 
     override fun onBindViewHolder(viewHolder: ViewHolder<ItemView>?, position: Int): Unit = viewHolder?.run { bindView(view, data[position]) } ?: Unit
 
-    abstract fun createView(parent: ViewGroup?): ItemView
+    abstract fun createView(parent: ViewGroup?): ItemView // CUR pass lambdas to constructor instead
 
     abstract fun bindView(view: ItemView, item: T): Unit
 }

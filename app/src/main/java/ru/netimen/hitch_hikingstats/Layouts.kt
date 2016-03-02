@@ -2,6 +2,7 @@ package ru.netimen.hitch_hikingstats
 
 import android.content.Context
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.jetbrains.anko.forEachChild
 
@@ -19,10 +20,19 @@ open class OneVisibleChildLayout(context: Context) : FrameLayout(context) {
 
         forEachChild { if (child == it) it.visibility = VISIBLE else it.visibility = hiddenVisibility }
     }
+
+    override fun addView(child: View?, index: Int) {
+        super.addView(child, index)
+    }
+
+    override fun addView(child: View?, index: Int, params: ViewGroup.LayoutParams?) {
+        super.addView(child, index, params)
+    }
 }
 
-class ML(ctx: Context) : OneVisibleChildLayout(ctx)
-
+//open class DataLayout(context: Context) : OneVisibleChildLayout(context) {
+//
+//}
 interface _FrameLayout {
     fun <T : View> T.lparams(
             c: android.content.Context?,
