@@ -10,7 +10,10 @@ import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewManager
 import android.widget.*
 import com.firebase.client.ChildEventListener
 import com.firebase.client.DataSnapshot
@@ -18,11 +21,13 @@ import com.firebase.client.Firebase
 import com.firebase.client.FirebaseError
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
-import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
 import org.jetbrains.anko.recyclerview.v7.recyclerView
-import org.jetbrains.anko.support.v4.*
+import org.jetbrains.anko.support.v4.UI
+import org.jetbrains.anko.support.v4._DrawerLayout
+import org.jetbrains.anko.support.v4.drawerLayout
+import org.jetbrains.anko.support.v4.viewPager
 import java.util.*
 import kotlin.reflect.KProperty
 
@@ -201,12 +206,14 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
 class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, TextView>() {
+    override val adapter = TextViewListAdapter<Ride>()
     override var presenter = RidesPresenter() // CUR make base fragment instantiate presenter
 }
 
 class RidesPresenter : PagingPresenter<Ride, ErrorInfo, RidesFragment>(GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20))
 
 class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() {
+    override val adapter = TextViewListAdapter<Car>()
     override var presenter = CarsPresenter()
 }
 
@@ -229,30 +236,43 @@ class ViewHolder<V : View>(itemView: V) : RecyclerView.ViewHolder(itemView) {
     val view = super.itemView as V
 }
 
+class TextViewListAdapter<T> : SimpleListAdapter<T, TextView>() {
+    override fun createView(parent: ViewGroup?) = TextView(parent?.context)
+
+    override fun bindView(view: TextView, item: T) = view.run { text = item.toString() }
+}
+
+abstract class SimpleListAdapter<T, ItemView : View> : RecyclerView.Adapter<ViewHolder<ItemView>>() {
+    protected val data = ArrayList<T>();
+
+    fun addData(newData: Collection<T>) {
+        data.addAll(newData)
+        notifyDataSetChanged() // CUR use notifyItemAdded instead
+    }
+
+    override fun getItemCount(): Int = data.size
+
+    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder<ItemView> = ViewHolder(createView(parent))
+
+    override fun onBindViewHolder(viewHolder: ViewHolder<ItemView>?, position: Int): Unit = viewHolder?.run { bindView(view, data[position]) } ?: Unit
+
+    abstract fun createView(parent: ViewGroup?): ItemView
+
+    abstract fun bindView(view: ItemView, item: T): Unit
+}
+
 abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, ItemView>, ItemView : View> : MvpFragment<P, V>(), PagingView<T, ErrorInfo> {
     lateinit var list: RecyclerView
     //    lateinit var add: View
     lateinit var loader: ProgressBar
     lateinit var container: OneVisibleChildLayout // CUR dataLayout
+    protected abstract val adapter: SimpleListAdapter<T, ItemView>
 
     override fun showLoading() = container.showChild(loader)
 
     override fun showData(data: List<T>) {
         container.showChild(list)
-        list.adapter = createAdapter(data)
-        ViewHolder(TextView(context)).itemView
-    }
-
-    protected open fun createAdapter(data: List<T>): RecyclerView.Adapter<ViewHolder<ItemView>> {
-        return object : RecyclerView.Adapter<ViewHolder<ItemView>>() {
-            override fun getItemCount(): Int = data.size
-
-            override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder<ItemView>? = ViewHolder(TextView(ctx))
-
-            override fun onBindViewHolder(holder: ViewHolder<ItemView>?, position: Int) {
-                holder?.view.text = data[position].toString()
-            }
-        }
+        adapter.addData(data)
     }
 
     override fun showNoData() {
@@ -274,25 +294,17 @@ abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, It
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
         this@ListFragment.container = oneVisibleChildLayout {
 
-            recyclerView {
-                list = this
+            list = recyclerView {
                 layoutManager = LinearLayoutManager(ctx)
-                //                                adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-                //                                    override fun getItemCount(): Int = 100
-                //
-                //                                    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder? = object : RecyclerView.ViewHolder(TextView(ctx).apply { text = "ccc" }) {}
-                //
-                //                                    override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int): Unit {
-                //                                    }
-                //                                }
+                adapter = this@ListFragment.adapter
             }
             loader = progressBar()
-//                        floatingActionButton {
-//                            imageResource = R.drawable.ic_add
-//                        }.lparams {
-//                            gravity = Gravity.RIGHT or Gravity.BOTTOM
-//                            margin = dimen(R.dimen.margin_big)
-//                        }
+            //                        floatingActionButton {
+            //                            imageResource = R.drawable.ic_add
+            //                        }.lparams {
+            //                            gravity = Gravity.RIGHT or Gravity.BOTTOM
+            //                            margin = dimen(R.dimen.margin_big)
+            //                        }
         }
     }.view
 }
@@ -424,7 +436,8 @@ class MainActivityUI : AnkoComponent<MainActivity> {
 }
 
 class _OneVisibleChildLayout(ctx: Context) : OneVisibleChildLayout(ctx), _FrameLayout
-fun ViewManager.oneVisibleChildLayout(init: _OneVisibleChildLayout.() -> Unit = {})= ankoView({ _OneVisibleChildLayout(it) }, init) // https://gist.github.com/cnevinc/539d6659a4afbf6a0b08
+
+fun ViewManager.oneVisibleChildLayout(init: _OneVisibleChildLayout.() -> Unit = {}) = ankoView({ _OneVisibleChildLayout(it) }, init) // https://gist.github.com/cnevinc/539d6659a4afbf6a0b08
 
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)

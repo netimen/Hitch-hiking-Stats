@@ -106,8 +106,6 @@ fun test(a: Presenter<out MvpView>) {
 class test2 : test() {
     //   override var a : Int = 0
 //        override val item  = 0
-    val item
-        get() = super.item
     fun test() {
         item
     }
