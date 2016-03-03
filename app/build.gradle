@@ -2,11 +2,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 buildscript {
+    ext.kotlin_version = '1.0.0'
     repositories {
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath deps.kotlinPlugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -56,5 +59,9 @@ dependencies {
     compile deps.firebase
 
     testCompile 'junit:junit:4.12'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+repositories {
+    mavenCentral()
 }
 

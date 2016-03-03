@@ -4,16 +4,16 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.progressBar
+import org.jetbrains.anko.*
+import org.jetbrains.anko.design.floatingActionButton
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.UI
-import org.jetbrains.anko.support.v4.ctx
 import java.util.*
 
 /**
@@ -25,8 +25,20 @@ import java.util.*
  */
 
 class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView>() {
+    private lateinit var add: View
     override val adapter = object : SimpleListAdapter<Ride, RideView>({ RideView(it.context) }, { rideView, ride -> rideView.bind(ride) }) {}// CUR make interface bindable
     override var presenter = RidesPresenter() // CUR make base fragment instantiate presenter
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
+        frameLayout {
+            addView(super.onCreateView(inflater, container, savedInstanceState))
+            add = floatingActionButton {
+                imageResource = R.drawable.ic_add
+            }.lparams {
+                gravity = Gravity.RIGHT or Gravity.BOTTOM
+                margin = dimen(R.dimen.margin_big)
+            }
+        }
+    }.view
 }
 
 class RidesPresenter : PagingPresenter<Ride, ErrorInfo, RidesFragment>(GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20))
@@ -68,7 +80,6 @@ abstract class SimpleListAdapter<T, ItemView : View>(protected val createView: (
 
 abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, ItemView>, ItemView : View> : MvpFragment<P, V>(), PagingView<T, ErrorInfo> {
     lateinit var list: RecyclerView
-    //    lateinit var add: View
     lateinit var loader: ProgressBar
     lateinit var container: OneVisibleChildLayout // CUR dataLayout
     protected abstract val adapter: SimpleListAdapter<T, ItemView>
@@ -104,12 +115,6 @@ abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, It
                 adapter = this@ListFragment.adapter
             }
             loader = progressBar()
-            //                        floatingActionButton {
-            //                            imageResource = R.drawable.ic_add
-            //                        }.lparams {
-            //                            gravity = Gravity.RIGHT or Gravity.BOTTOM
-            //                            margin = dimen(R.dimen.margin_big)
-            //                        }
         }
     }.view
 }
