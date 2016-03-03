@@ -1,5 +1,8 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.lib
 
+import ru.netimen.hitch_hikingstats.Car
+import ru.netimen.hitch_hikingstats.IdObject
+import ru.netimen.hitch_hikingstats.Ride
 import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers

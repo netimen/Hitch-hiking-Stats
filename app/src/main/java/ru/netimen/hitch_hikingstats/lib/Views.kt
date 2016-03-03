@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.lib
 
 /**
  * Copyright (c) 2016 Bookmate.

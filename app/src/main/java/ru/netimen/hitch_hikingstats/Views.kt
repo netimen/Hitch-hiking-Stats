@@ -1,11 +1,8 @@
 package ru.netimen.hitch_hikingstats
 
 import android.content.Context
-import android.view.View
-import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
-import org.jetbrains.anko.AnkoContext
 import org.jetbrains.anko.alignParentLeft
 import org.jetbrains.anko.alignParentRight
 import org.jetbrains.anko.textView
@@ -28,72 +25,13 @@ class RideView(context: Context) : RelativeLayout(context), _RelativeLayout { //
     }
 
     init {
-        carView = textView {
-            text = "aaa"
-        }.lparams {
+        carView = textView { }.lparams {
             alignParentLeft()
         }
-        dateView = textView {
-            text = "bbb"
-        }.lparams {
+        dateView = textView { }.lparams {
             alignParentRight()
         }
     }
-
 }
 
-interface _RelativeLayout {
-    fun <T : View> T.lparams(
-            c: android.content.Context?,
-            attrs: android.util.AttributeSet?,
-            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
-    ): T {
-        val layoutParams = android.widget.RelativeLayout.LayoutParams(c!!, attrs!!)
-        layoutParams.init()
-        this@lparams.layoutParams = layoutParams
-        return this
-    }
-
-    fun <T : View> T.lparams(
-            width: Int = android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-            height: Int = android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
-    ): T {
-        val layoutParams = android.widget.RelativeLayout.LayoutParams(width, height)
-        layoutParams.init()
-        this@lparams.layoutParams = layoutParams
-        return this
-    }
-
-    fun <T : View> T.lparams(
-            source: android.view.ViewGroup.LayoutParams?,
-            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
-    ): T {
-        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
-        layoutParams.init()
-        this@lparams.layoutParams = layoutParams
-        return this
-    }
-
-    fun <T : View> T.lparams(
-            source: android.view.ViewGroup.MarginLayoutParams?,
-            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
-    ): T {
-        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
-        layoutParams.init()
-        this@lparams.layoutParams = layoutParams
-        return this
-    }
-
-    fun <T : View> T.lparams(
-            source: android.widget.RelativeLayout.LayoutParams?,
-            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
-    ): T {
-        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
-        layoutParams.init()
-        this@lparams.layoutParams = layoutParams
-        return this
-    }
-
-}
 

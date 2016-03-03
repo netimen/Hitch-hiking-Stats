@@ -2,37 +2,22 @@ package ru.netimen.hitch_hikingstats
 
 import android.content.Context
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import org.jetbrains.anko.forEachChild
 
 /**
  * Copyright (c) 2016 Bookmate.
  * All Rights Reserved.
  *
  * Author: Dmitry Gordeev <netimen@dreamindustries.co>
- * Date:   26.02.16
+ * Date:   03.03.16
  */
 
-open class OneVisibleChildLayout(context: Context) : FrameLayout(context) {
-    fun showChild(child: View, hiddenVisibility: Int = View.GONE) {
-        if (child.parent != this) throw IllegalArgumentException("$child is not a child of $this")
+fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
 
-        forEachChild { if (child == it) it.visibility = VISIBLE else it.visibility = hiddenVisibility }
-    }
+fun String?.notEmpty() = if (isNullOrEmpty()) null else this
 
-    override fun addView(child: View?, index: Int) {
-        super.addView(child, index)
-    }
+inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
+fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
 
-    override fun addView(child: View?, index: Int, params: ViewGroup.LayoutParams?) {
-        super.addView(child, index, params)
-    }
-}
-
-//open class DataLayout(context: Context) : OneVisibleChildLayout(context) {
-//
-//}
 interface _FrameLayout {
     fun <T : View> T.lparams(
             c: android.content.Context?,
@@ -93,6 +78,61 @@ interface _FrameLayout {
             init: android.widget.FrameLayout.LayoutParams.() -> Unit = {}
     ): T {
         val layoutParams = android.widget.FrameLayout.LayoutParams(source!!)
+        layoutParams.init()
+        this@lparams.layoutParams = layoutParams
+        return this
+    }
+
+}
+
+interface _RelativeLayout {
+    fun <T : View> T.lparams(
+            c: android.content.Context?,
+            attrs: android.util.AttributeSet?,
+            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
+    ): T {
+        val layoutParams = android.widget.RelativeLayout.LayoutParams(c!!, attrs!!)
+        layoutParams.init()
+        this@lparams.layoutParams = layoutParams
+        return this
+    }
+
+    fun <T : View> T.lparams(
+            width: Int = android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            height: Int = android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
+    ): T {
+        val layoutParams = android.widget.RelativeLayout.LayoutParams(width, height)
+        layoutParams.init()
+        this@lparams.layoutParams = layoutParams
+        return this
+    }
+
+    fun <T : View> T.lparams(
+            source: android.view.ViewGroup.LayoutParams?,
+            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
+    ): T {
+        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
+        layoutParams.init()
+        this@lparams.layoutParams = layoutParams
+        return this
+    }
+
+    fun <T : View> T.lparams(
+            source: android.view.ViewGroup.MarginLayoutParams?,
+            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
+    ): T {
+        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
+        layoutParams.init()
+        this@lparams.layoutParams = layoutParams
+        return this
+    }
+
+    fun <T : View> T.lparams(
+            source: android.widget.RelativeLayout.LayoutParams?,
+            init: android.widget.RelativeLayout.LayoutParams.() -> Unit = {}
+    ): T {
+        val layoutParams = android.widget.RelativeLayout.LayoutParams(source!!)
         layoutParams.init()
         this@lparams.layoutParams = layoutParams
         return this

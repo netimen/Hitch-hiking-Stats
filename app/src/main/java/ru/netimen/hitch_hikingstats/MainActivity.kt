@@ -28,12 +28,13 @@ import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
+import ru.netimen.hitch_hikingstats.lib.CarsRepo
+import ru.netimen.hitch_hikingstats.lib.Repo
+import ru.netimen.hitch_hikingstats.lib.RidesRepo
+import ru.netimen.hitch_hikingstats.lib.TripListParams
 import java.util.*
 import kotlin.reflect.KProperty
 
-fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
-
-fun String?.notEmpty() = if (isNullOrEmpty()) null else this
 
 class AddFieldDelegate<T, I>(private val defaultValue: I) {
     private val fieldMap = HashMap<T, I>()
@@ -185,57 +186,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 }
 
-class GoFragment : Fragment() {
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = GoFragmentUI().createView(UI {})
-}
-
-class GoFragmentUI : AnkoComponent<Fragment> {
-    lateinit var title: TextView
-    lateinit var car: EditText
-    lateinit var ride: Button
-
-    override fun createView(ui: AnkoContext<Fragment>) = with(ui) {
-
-        relativeLayout {
-            fitsSystemWindows = true // CUR on small screens run button is invisible
-            padding = dimen(R.dimen.margin_big)
-
-            val rideStates = stringArray(R.array.hitch_states)
-            title = textView(rideStates[0]) { // CUR display state in toolbar instead
-                id = 1
-                textSize = 20f
-            }.lparams {
-                alignParentTop()
-                centerHorizontally()
-                bottomMargin = dip(40)
-                topMargin = dimen(R.dimen.margin_big)
-            }
-
-            val buttonMargin = dimen(R.dimen.margin_small)
-            val b = button(rideStates[1]) {
-                id = 2
-            }.lparams {
-                margin = buttonMargin
-                alignParentRight()
-                below(title)
-            }
-            ride = button(rideStates[2]) {
-                id = 3
-            }.lparams {
-                margin = buttonMargin
-                alignParentRight()
-                below(b)
-            }
-            car = editText {
-                hintResource = R.string.toyota
-            }.lparams(width = dip(120)) {
-                margin = buttonMargin
-                sameBottom(ride)
-                leftOf(ride)
-            }
-        }
-    }
-}
 
 class MainActivityUI : AnkoComponent<MainActivity> {
     lateinit var pager: ViewPager
@@ -314,11 +264,4 @@ class MainActivityUI : AnkoComponent<MainActivity> {
         }
     }
 }
-
-class _OneVisibleChildLayout(ctx: Context) : OneVisibleChildLayout(ctx), _FrameLayout
-
-fun ViewManager.oneVisibleChildLayout(init: _OneVisibleChildLayout.() -> Unit = {}) = ankoView({ _OneVisibleChildLayout(it) }, init) // https://gist.github.com/cnevinc/539d6659a4afbf6a0b08
-
-inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
-fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
 

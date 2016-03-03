@@ -1,5 +1,7 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.lib
 
+import ru.netimen.hitch_hikingstats.lib.*
+import ru.netimen.hitch_hikingstats.onNull
 import rx.Subscription
 import rx.subscriptions.CompositeSubscription
 import java.util.*
@@ -12,7 +14,7 @@ import java.util.*
  * Date:   26.02.16
  */
 
-abstract class Presenter<V : MvpView> {
+abstract class Presenter<V : MvpView> { // cur make Presenter die with the view, so get view in the constructor
     private val allSubscriptions = CompositeSubscription()
     private var attachCount = 0
     protected var view: V? = null

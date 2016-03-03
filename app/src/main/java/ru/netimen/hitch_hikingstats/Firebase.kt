@@ -2,6 +2,7 @@ package ru.netimen.hitch_hikingstats
 
 import com.firebase.client.*
 import com.soikonomakis.rxfirebase.RxFirebase
+import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import java.util.*
 
