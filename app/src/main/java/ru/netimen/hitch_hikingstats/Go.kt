@@ -22,6 +22,24 @@ import rx.Observable
  * Author: Dmitry Gordeev <netimen@dreamindustries.co>
  * Date:   03.03.16
  */
+
+sealed class GoState { // CUR store state in case crash, reboot etc
+    abstract class StateWithLength() : GoState() {
+        val lengthMinutes = System.currentTimeMillis()
+            get() = (System.currentTimeMillis() - field) / 60 / 1000
+    }
+
+    class Idle : GoState()
+    class Waiting : StateWithLength()
+    class Riding(val car: Car, val waitMinutes: Int) : StateWithLength()
+}
+
+fun test(state: GoState) {
+    when (state) {
+        is GoState.Riding -> state.lengthMinutes
+    }
+}
+
 interface GoView : MvpView {
     fun rideClicked(): Observable<Unit>
     fun stopClicked(): Observable<Unit>
@@ -30,9 +48,16 @@ interface GoView : MvpView {
 }
 
 class GoPresenter : Presenter<GoView>() {
-    override fun onAttachView() {
-        super.onAttachView()
+    var state = GoState.Idle()
+
+    fun <T> observeView(observable: GoView.() -> Observable<T>) = view?.run { observable() } ?: Observable.never<T>()
+
+    override fun onViewAttached() {
+        unsubscribeOnDetach(observeView(GoView::rideClicked).subscribe())
     }
+    //    override fun onViewAttached() = view?.let { view ->
+    //        unsubscribeOnDetach(view.rideClicked().subscribe())
+    //    } ?: Unit
 }
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {

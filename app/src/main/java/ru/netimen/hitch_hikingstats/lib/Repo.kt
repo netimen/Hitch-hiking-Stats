@@ -20,7 +20,7 @@ import java.util.*
 
 interface ListParams
 
-data class Result<T, E>(val data: T? = null, val error: E? = null) {
+data class Result<T, E>(val data: T? = null, val error: E? = null) { // cur make it a sealed class or enum
 
     fun isSuccessful(): Boolean = data != null
 }

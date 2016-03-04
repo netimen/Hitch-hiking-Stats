@@ -28,7 +28,7 @@ abstract class Presenter<V : MvpView> { // cur make Presenter die with the view,
         if (attachCount++ == 0)
             onFirstAttach()
 
-        onAttachView()
+        onViewAttached()
     }
 
     fun detachView() {
@@ -37,7 +37,7 @@ abstract class Presenter<V : MvpView> { // cur make Presenter die with the view,
         onDetachView()
     }
 
-    protected open fun onAttachView() = Unit
+    protected open fun onViewAttached() = Unit
 
     protected open fun onFirstAttach() = Unit
 
