@@ -23,21 +23,21 @@ import rx.Observable
  * Date:   03.03.16
  */
 
+//interface HasLength {
+//    val aaa by lazy { "aaa" }
+////    val lengthMinutes = System.currentTimeMillis()
+////        get() = (System.currentTimeMillis() - field) / 60 / 1000
+//}
 sealed class GoState { // CUR store state in case crash, reboot etc
-    abstract class StateWithLength() : GoState() {
-        val lengthMinutes = System.currentTimeMillis()
-            get() = (System.currentTimeMillis() - field) / 60 / 1000
-    }
+    //    abstract class StateWithLength() : GoState() {
+    val lengthMinutes = System.currentTimeMillis()
+        get() = (System.currentTimeMillis() - field) / 60 / 1000
+    //    }
 
     class Idle : GoState()
-    class Waiting : StateWithLength()
-    class Riding(val car: Car, val waitMinutes: Int) : StateWithLength()
-}
+    class Waiting : GoState()
+    class Riding(val car: Car, val waitMinutes: Int) : GoState()
 
-fun test(state: GoState) {
-    when (state) {
-        is GoState.Riding -> state.lengthMinutes
-    }
 }
 
 interface GoView : MvpView {
@@ -45,37 +45,50 @@ interface GoView : MvpView {
     fun stopClicked(): Observable<Unit>
     fun waitClicked(): Observable<Unit>
     fun carSelected(): Observable<String>
+
+    fun showState(state: GoState)
 }
 
-class GoPresenter : Presenter<GoView>() {
-    var state = GoState.Idle()
+class GoPresenter(view: GoView) : Presenter<GoView>(view) {
+    var state: GoState = GoState.Idle()
 
-    fun <T> observeView(observable: GoView.() -> Observable<T>) = view?.run { observable() } ?: Observable.never<T>()
-
-    override fun onViewAttached() {
-        unsubscribeOnDetach(observeView(GoView::rideClicked).subscribe())
+    init {
+        view.showState(state)
+        view.waitClicked().subscribe {
+            state = GoState.Waiting()
+            view.showState(state)
+        }
+        view.rideClicked().subscribe {
+            state = GoState.Waiting()
+        }
     }
-    //    override fun onViewAttached() = view?.let { view ->
-    //        unsubscribeOnDetach(view.rideClicked().subscribe())
-    //    } ?: Unit
 }
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
-    override val presenter = GoPresenter()
+    override val presenter = GoPresenter(this)
     private val ui = GoFragmentUI()
+    private lateinit var state: GoState
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
     override fun rideClicked() = ui.ride.clicks()
 
-    override fun stopClicked(): Observable<Unit> = throw UnsupportedOperationException()
+    override fun stopClicked(): Observable<Unit> = ui.waitStop.clicks().filter { state !is GoState.Idle }
 
-    override fun waitClicked(): Observable<Unit> {
-        throw UnsupportedOperationException()
-    }
+    override fun waitClicked(): Observable<Unit> = ui.waitStop.clicks().filter { state is GoState.Idle }
 
     override fun carSelected(): Observable<String> {
         throw UnsupportedOperationException()
+    }
+
+    override fun showState(state: GoState) {
+        this.state = state
+        when (state) {
+            is GoState.Waiting -> {
+                ui.waitStop.text = ui.getSateCaption(state)
+            }
+        }
+
     }
 
 }
@@ -86,14 +99,22 @@ class GoFragmentUI : AnkoComponent<Fragment> {
     lateinit var ride: Button
     lateinit var waitStop: Button
 
+    lateinit var statesCaptions: Array<out String>
+
+    fun getSateCaption(state: GoState) = when (state) {
+        is GoState.Idle -> statesCaptions[0]
+        is GoState.Waiting -> statesCaptions[1]
+        is GoState.Riding -> statesCaptions[2]
+    }
+
     override fun createView(ui: AnkoContext<Fragment>) = with(ui) {
 
         relativeLayout {
             fitsSystemWindows = true // CUR on small screens run button is invisible
             padding = dimen(R.dimen.margin_big)
 
-            val rideStates = stringArray(R.array.hitch_states)
-            title = textView(rideStates[0]) { // CUR display state in toolbar instead
+            statesCaptions = stringArray(R.array.hitch_states)
+            title = textView(statesCaptions[0]) { // CUR display state in toolbar instead
                 id = 1
                 textSize = 20f
             }.lparams {
@@ -104,14 +125,14 @@ class GoFragmentUI : AnkoComponent<Fragment> {
             }
 
             val buttonMargin = dimen(R.dimen.margin_small)
-            waitStop = button(rideStates[1]) {
+            waitStop = button(statesCaptions[1]) {
                 id = 2
             }.lparams {
                 margin = buttonMargin
                 alignParentRight()
                 below(title)
             }
-            ride = button(rideStates[2]) {
+            ride = button(statesCaptions[2]) {
                 id = 3
             }.lparams {
                 margin = buttonMargin

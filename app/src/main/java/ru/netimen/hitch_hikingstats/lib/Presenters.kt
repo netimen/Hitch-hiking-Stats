@@ -1,9 +1,5 @@
 package ru.netimen.hitch_hikingstats.lib
 
-import ru.netimen.hitch_hikingstats.lib.*
-import ru.netimen.hitch_hikingstats.onNull
-import rx.Subscription
-import rx.subscriptions.CompositeSubscription
 import java.util.*
 
 /**
@@ -14,53 +10,19 @@ import java.util.*
  * Date:   26.02.16
  */
 
-abstract class Presenter<V : MvpView> { // cur make Presenter die with the view, so get view in the constructor
-    private val allSubscriptions = CompositeSubscription()
-    private var attachCount = 0
-    protected var view: V? = null
+abstract class Presenter<V : MvpView>(protected val view: V)
 
-    fun isViewAttached() = view != null
-
-    protected fun assertViewAttached() = view.onNull { throw IllegalStateException("A View must be attached to this presenter to access the view property") }
-
-    fun attachView(view: V) {
-        this.view = view
-        if (attachCount++ == 0)
-            onFirstAttach()
-
-        onViewAttached()
-    }
-
-    fun detachView() {
-        view = null
-        allSubscriptions.clear()
-        onDetachView()
-    }
-
-    protected open fun onViewAttached() = Unit
-
-    protected open fun onFirstAttach() = Unit
-
-    protected open fun onDetachView() = Unit
-
-    protected fun unsubscribeOnDetach(s: Subscription) = allSubscriptions.add(s)
-
-}
-
-open class PagingPresenter<T, E, V : PagingView<T, E>>(protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>() {
-    protected val objects = ArrayList<T>()
-
-    override fun onFirstAttach() = load()
+open class PagingPresenter<T, E, V : PagingView<T, E>>(view: V, protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>(view) {
+    protected val objects = ArrayList<T>() // CUR store this in ViewModel
 
     fun load() {
-        assertViewAttached()
 
-        view?.showLoading()
+        view.showLoading()
 
-        unsubscribeOnDetach(LoadObservable(loadUseCase.execute())
-                .onError { view?.showError(it) }
-                .onData { view?.showData(objects.apply { addAll(it) }) }
-                .onNoData { view?.showNoData() }
-                .subscribe()) // CUR show unexpected error
+        LoadObservable(loadUseCase.execute())
+                .onError { view.showError(it) }
+                .onData { view.showData(objects.apply { addAll(it) }) }
+                .onNoData { view.showNoData() }
+                .subscribe() // CUR show unexpected error
     }
 }
