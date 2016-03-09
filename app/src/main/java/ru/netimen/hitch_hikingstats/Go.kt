@@ -49,6 +49,7 @@ interface GoView : MvpView {
     fun showState(state: GoState)
 }
 
+// cur independent vm layer
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state: GoState = GoState.Idle()
 
@@ -65,9 +66,11 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
 }
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
-    override val presenter = GoPresenter(this)
+//    override val presenter = GoPresenter(this)
     private val ui = GoFragmentUI()
     private lateinit var state: GoState
+
+    override fun createPresenter() = GoPresenter(this)
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 

@@ -25,12 +25,14 @@ import java.util.*
  */
 
 abstract class MvpFragment<P : Presenter<in V>, V : MvpFragment<P, V>> : Fragment(), MvpView {
-    protected abstract val presenter: P
+    protected lateinit  var presenter: P
 
-//    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-//        super.onViewCreated(view, savedInstanceState)
+    abstract fun createPresenter() : P
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        presenter = createPresenter()
 //        presenter.attachView(this as V)
-//    }
+    }
 }
 
 class ViewHolder<V : View>(itemView: V) : RecyclerView.ViewHolder(itemView) {

@@ -25,7 +25,8 @@ import ru.netimen.hitch_hikingstats.lib.*
 class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView>() {
     private lateinit var add: View
     override val adapter = object : SimpleListAdapter<Ride, RideView>({ RideView(it.context) }, { rideView, ride -> rideView.bind(ride) }) {}// CUR make interface bindable
-    override var presenter = RidesPresenter(this) // CUR make base fragment instantiate presenter
+//    override var presenter = RidesPresenter(this) // CUR make base fragment instantiate presenter
+    override fun createPresenter() = RidesPresenter(this)
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
         frameLayout {
             addView(super.onCreateView(inflater, container, savedInstanceState))
@@ -43,7 +44,7 @@ class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, Rid
 
 class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() {
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
-    override var presenter = CarsPresenter(this)
+    override fun createPresenter() = CarsPresenter(this)
 }
 
 class CarsPresenter(view: CarsFragment) : PagingPresenter<Car, ErrorInfo, CarsFragment>(view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))
