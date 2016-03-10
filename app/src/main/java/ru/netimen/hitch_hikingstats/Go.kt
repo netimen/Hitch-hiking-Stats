@@ -26,33 +26,6 @@ import kotlin.reflect.KProperty
  * Date:   03.03.16
  */
 
-//interface HasLength {
-//    val aaa by lazy { "aaa" }
-////    val lengthMinutes = System.currentTimeMillis()
-class LengthMinutesDelegate<T>() {
-    private val creationMillis = System.currentTimeMillis()
-    operator fun getValue(t: T, property: KProperty<*>): Int = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - creationMillis).toInt()
-}
-
-sealed class GoState { // CUR store state in case crash, reboot etc
-    //    abstract class StateWithLength() : GoState() {
-    //    open val lengthMinutes: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) as Int
-    //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
-
-    open val lengthMinutes: Int by LengthMinutesDelegate()
-    //    open val lengthMinutes: Int by lazy { }
-    //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
-    //    }
-
-    class Idle : GoState() {
-        override val lengthMinutes = 0
-    }
-
-    class Waiting : GoState()
-    class Riding(val car: Car, val waitMinutes: Int) : GoState()
-
-}
-
 interface GoView : MvpView {
     fun rideClicked(): Observable<Unit>
     fun stopClicked(): Observable<Unit>
@@ -74,6 +47,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     }
 
     private fun updateState(newState: GoState) {
+        FirebaseStateRepo().set(newState)
         view.showState(newState)
     }
 }
@@ -115,7 +89,7 @@ class GoFragmentUI : AnkoComponent<Fragment> {
     }
 
     fun getWaitStopButtonCaption(state: GoState) = when (state) {
-        is GoState.Idle -> R.string.stop
+        is GoState.Idle -> R.string.wait
         else -> R.string.stop
     }
 

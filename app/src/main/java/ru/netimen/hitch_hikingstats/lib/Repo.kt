@@ -27,6 +27,13 @@ private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (O
 
 fun <T, E> Observable<T>.wrapResult(errorInfoFactory: (Throwable) -> E) = compose(wrapResultTransformer<T, E>(errorInfoFactory))
 
+interface SingleRepo<T,E> {
+
+    fun get(): Observable<Result<T, E>>
+
+    fun set(t: T)
+}
+
 interface Repo<T, E, L : ListParams> {
 
     class Query<L>(val listParams: L, val page: Int = 0, val perPage: Int = 0, val limit: Int = -1)

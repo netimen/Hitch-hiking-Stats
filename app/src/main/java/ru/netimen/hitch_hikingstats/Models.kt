@@ -1,5 +1,8 @@
 package ru.netimen.hitch_hikingstats
 
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KProperty
+
 /**
  * Copyright (c) 2016 Bookmate.
  * All Rights Reserved.
@@ -27,3 +30,27 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
+
+private class LengthMinutesDelegate<T>() {
+    private val creationMillis = System.currentTimeMillis()
+    operator fun getValue(t: T, property: KProperty<*>): Int = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - creationMillis).toInt()
+}
+
+sealed class GoState {
+    //    abstract class StateWithLength() : GoState() {
+    //    open val lengthMinutes: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) as Int
+    //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
+
+    open val lengthMinutes: Int by LengthMinutesDelegate()
+    //    open val lengthMinutes: Int by lazy { }
+    //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
+    //    }
+
+    class Idle : GoState() {
+        override val lengthMinutes = 0
+    }
+
+    class Waiting : GoState()
+    class Riding(val car: Car, val waitMinutes: Int) : GoState()
+
+}

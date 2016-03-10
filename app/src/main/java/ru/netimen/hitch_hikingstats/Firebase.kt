@@ -2,7 +2,9 @@ package ru.netimen.hitch_hikingstats
 
 import com.firebase.client.*
 import com.soikonomakis.rxfirebase.RxFirebase
-import ru.netimen.hitch_hikingstats.lib.*
+import ru.netimen.hitch_hikingstats.lib.Repo
+import ru.netimen.hitch_hikingstats.lib.Result
+import ru.netimen.hitch_hikingstats.lib.wrapResult
 import rx.Observable
 import java.util.*
 
@@ -91,8 +93,11 @@ private fun removeRideExtraData(ref: Firebase, ride: Ride) {
 
 
 // cur thread-safety
-abstract class FirebaseRepo<T> internal constructor(url: String) : HitchRepo<T> {
+abstract class HasFirebase internal constructor(url: String) {
     protected val firebase = Firebase(url)
+}
+
+abstract class FirebaseRepo<T> internal constructor(url: String) : HasFirebase(url), HitchRepo<T> {
 
     override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
             .observeSingleValue(query.listParams.trip.notEmpty()?.let { tripObjectsRef(it) } ?: objectsRef())
@@ -100,13 +105,17 @@ abstract class FirebaseRepo<T> internal constructor(url: String) : HitchRepo<T> 
             .map({ extractObjects(it) })
             .wrapResult { ErrorInfo(it) }
 
-    protected open fun tripObjectsRef(trip: String): Query = objectsRef(firebase.trip(trip))
-
     override fun get(id: String): Observable<Result<T, ErrorInfo>> = throw UnsupportedOperationException()
+
+    override fun addOrUpdate(t: T): Unit = throw UnsupportedOperationException()
+
+    override fun remove(t: T): Unit = throw UnsupportedOperationException()
 
     protected abstract fun objectsRef(root: Firebase): Firebase
 
     protected fun objectsRef() = objectsRef(firebase)
+
+    protected open fun tripObjectsRef(trip: String): Query = objectsRef(firebase.trip(trip))
 
     protected fun extractObjects(dataSnapshot: DataSnapshot) = (dataSnapshot.value as? Map<String, *>)?.map { extractObject(it.key, it.value!!) } ?: ArrayList()
 
@@ -171,10 +180,18 @@ class FirebaseCarsRepo(url: String) : FirebaseRepo<Car>(url), CarsRepo {
     override fun objectsRef(root: Firebase): Firebase = root.child("cars")
 
     override fun extractObject(key: String, value: Any) = Car(key, (value as Long).toInt())
+}
 
-    override fun addOrUpdate(t: Car) = throw UnsupportedOperationException()
+class FirebaseStateRepo(url: String) : HasFirebase(url), StateRepo {
+    constructor() : this(URL)
 
-    override fun remove(t: Car) = throw UnsupportedOperationException()
+    override fun get(): Observable<Result<GoState, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun set(t: GoState) {
+        firebase.child("state").setValue(t)
+    }
 }
 
 private val URL = "https://dazzling-heat-4079.firebaseio.com/" // cUr support "/test" as main ref
