@@ -28,10 +28,7 @@ import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
-import ru.netimen.hitch_hikingstats.lib.CarsRepo
 import ru.netimen.hitch_hikingstats.lib.Repo
-import ru.netimen.hitch_hikingstats.lib.RidesRepo
-import ru.netimen.hitch_hikingstats.lib.TripListParams
 import java.util.*
 import kotlin.reflect.KProperty
 

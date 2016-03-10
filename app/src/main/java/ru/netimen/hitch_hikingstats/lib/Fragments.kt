@@ -12,6 +12,7 @@ import org.jetbrains.anko.progressBar
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4.ctx
+import ru.netimen.hitch_hikingstats.ErrorInfo
 import ru.netimen.hitch_hikingstats.lib.OneVisibleChildLayout
 import ru.netimen.hitch_hikingstats.lib.oneVisibleChildLayout
 import java.util.*
