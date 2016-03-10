@@ -2,17 +2,13 @@
     <string name="app_name">Hitch-hiking Stats</string>
     <string name="toyota">Toyota</string>
 
-    <string-array name="go_states">
-        <item>Idle</item>
-        <item>Waiting</item>
-        <item>Riding</item>
-    </string-array>
+    <string name="stop">Stop</string>
+    <string name="wait">Wait</string>
+    <string name="ride">Ride</string>
 
-    <string-array name="go_buttons">
-        <item>Stop</item>
-        <item>Wait</item>
-        <item>Ride</item>
-    </string-array>
+    <string name="idle">Idle</string>
+    <string name="waiting">Waiting</string>
+    <string name="riding">Riding</string>
 
     <string-array name="trip_tabs">
         <item>Go!</item>

@@ -62,7 +62,7 @@ interface GoView : MvpView {
     fun showState(state: GoState)
 }
 
-// cur independent vm layer
+// cur independent vm layer, loading data while fragment is being created
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
 
@@ -70,7 +70,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
         view.showState(state)//CUR load state here instead
         view.stopClicked().subscribe { state = GoState.Idle() }
         view.waitClicked().subscribe { state = GoState.Waiting() }
-        view.rideClicked().subscribe { state = GoState.Riding(Car("aaa", 1), state.lengthMinutes) }
+        view.rideClicked().subscribe { state = GoState.Riding(Car("aaa", 1), state.lengthMinutes) }//CUR: get car
     }
 
     private fun updateState(newState: GoState) {
@@ -97,58 +97,41 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     }
 
     override fun showState(state: GoState) {
-        activity.title = ui.getSateCaption(state)
-        ui.waitStop.text = ui.getWaitStopButtonCaption(state)
+        activity.title = getString(ui.getSateCaption(state))
+        ui.waitStop.textResource = ui.getWaitStopButtonCaption(state)
     }
 
 }
 
 class GoFragmentUI : AnkoComponent<Fragment> {
-    //    lateinit var title: TextView
     lateinit var car: EditText
     lateinit var ride: Button
     lateinit var waitStop: Button
 
-    lateinit private var statesCaptions: Array<out String>
-    lateinit private var buttonsCaptions: Array<out String>
-
     fun getSateCaption(state: GoState) = when (state) {
-        is GoState.Idle -> statesCaptions[0]
-        is GoState.Waiting -> statesCaptions[1]
-        is GoState.Riding -> statesCaptions[2]
+        is GoState.Idle -> R.string.idle
+        is GoState.Waiting -> R.string.waiting
+        is GoState.Riding -> R.string.riding
     }
 
     fun getWaitStopButtonCaption(state: GoState) = when (state) {
-        is GoState.Idle -> buttonsCaptions[1]
-        else -> buttonsCaptions[0]
+        is GoState.Idle -> R.string.stop
+        else -> R.string.stop
     }
 
     override fun createView(ui: AnkoContext<Fragment>) = with(ui) {
 
         relativeLayout {
-            fitsSystemWindows = true // CUR on small screens run button is invisible
+            fitsSystemWindows = true
             padding = dimen(R.dimen.margin_big)
 
-            statesCaptions = stringArray(R.array.go_states)
-            buttonsCaptions = stringArray(R.array.go_buttons)
-            //            title = textView(statesCaptions[0]) { // CUR display state in toolbar instead
-            //                id = 1
-            //                textSize = 20f
-            //            }.lparams {
-            //                alignParentTop()
-            //                centerHorizontally()
-            //                bottomMargin = dip(40)
-            //                topMargin = dimen(R.dimen.margin_big)
-            //            }
-
             val buttonMargin = dimen(R.dimen.margin_small)
-            ride = button(buttonsCaptions[2]) {
+            ride = button(R.string.ride) {
                 id = 3
             }.lparams {
                 margin = buttonMargin
                 alignParentRight()
                 centerVertically()
-                //                below(waitStop)
             }
             car = editText {
                 hintResource = R.string.toyota
@@ -157,7 +140,7 @@ class GoFragmentUI : AnkoComponent<Fragment> {
                 sameBottom(ride)
                 leftOf(ride)
             }
-            waitStop = button(buttonsCaptions[1]) {
+            waitStop = button(R.string.wait) {
             }.lparams {
                 margin = buttonMargin
                 alignParentRight()
