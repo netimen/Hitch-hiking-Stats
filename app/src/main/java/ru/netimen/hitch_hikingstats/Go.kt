@@ -3,20 +3,19 @@ package ru.netimen.hitch_hikingstats
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RelativeLayout
 import com.jakewharton.rxbinding.view.clicks
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
-import ru.netimen.hitch_hikingstats.lib.BranchableSubject
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
 import ru.netimen.hitch_hikingstats.lib.MvpView
 import ru.netimen.hitch_hikingstats.lib.Presenter
 import rx.Observable
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
-import kotlin.reflect.KProperty
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -54,7 +53,6 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     private val ui = GoFragmentUI()
-    private val waitStopClicks by lazy { BranchableSubject(ui.waitStop.clicks()) }
 
     override fun createPresenter() = GoPresenter(this)
 
@@ -62,9 +60,9 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     override fun rideClicked() = ui.ride.clicks()
 
-    override fun stopClicked(): Observable<Unit> = waitStopClicks.branch { presenter.state !is GoState.Idle }
+    override fun stopClicked(): Observable<Unit> = ui.stop.clicks()
 
-    override fun waitClicked(): Observable<Unit> = waitStopClicks.branch { presenter.state is GoState.Idle }
+    override fun waitClicked(): Observable<Unit> = ui.wait.clicks()
 
     override fun carSelected(): Observable<String> {
         throw UnsupportedOperationException()
@@ -72,7 +70,8 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     override fun showState(state: GoState) {
         activity.title = getString(ui.getSateCaption(state))
-        ui.waitStop.textResource = ui.getWaitStopButtonCaption(state)
+        ui.wait.visibility = if (state is GoState.Idle) View.VISIBLE else View.GONE
+        ui.stop.visibility = if (ui.wait.visibility == View.VISIBLE) View.GONE else View.VISIBLE
     }
 
 }
@@ -80,17 +79,13 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 class GoFragmentUI : AnkoComponent<Fragment> {
     lateinit var car: EditText
     lateinit var ride: Button
-    lateinit var waitStop: Button
+    lateinit var wait: Button
+    lateinit var stop: Button
 
     fun getSateCaption(state: GoState) = when (state) {
         is GoState.Idle -> R.string.idle
         is GoState.Waiting -> R.string.waiting
         is GoState.Riding -> R.string.riding
-    }
-
-    fun getWaitStopButtonCaption(state: GoState) = when (state) {
-        is GoState.Idle -> R.string.wait
-        else -> R.string.stop
     }
 
     override fun createView(ui: AnkoContext<Fragment>) = with(ui) {
@@ -114,12 +109,16 @@ class GoFragmentUI : AnkoComponent<Fragment> {
                 sameBottom(ride)
                 leftOf(ride)
             }
-            waitStop = button(R.string.wait) {
-            }.lparams {
+            val waitStopLparams: RelativeLayout.LayoutParams.() -> Unit = {
                 margin = buttonMargin
                 alignParentRight()
                 above(ride)
             }
+            wait = button(R.string.wait) {
+            }.lparams(init = waitStopLparams)
+            stop = button(R.string.stop) {
+                visibility = View.GONE
+            }.lparams(init = waitStopLparams)
         }
     }
 

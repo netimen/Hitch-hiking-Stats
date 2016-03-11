@@ -48,18 +48,4 @@ fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean,
 
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 
-class BranchableSubject<T>(protected val observable: Observable<T>) {// CUR: very bad code
-    private val branches = ArrayList<Pair<(T) -> Boolean, PublishSubject<T>>>()
 
-    init {
-        observable.subscribe {
-            for (branch in branches)
-                if (branch.first(it)) {
-                    branch.second.onNext(it);
-                    return@subscribe;
-                }
-        }
-    }
-
-    fun branch(predicate: (T) -> Boolean) = PublishSubject.create<T>().apply { branches.add(predicate to this) }
-}
