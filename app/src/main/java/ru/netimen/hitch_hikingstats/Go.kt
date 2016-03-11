@@ -39,10 +39,10 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
 
     init {
-        view.showState(state)//CUR load state here instead
+        FirebaseStateRepo().get().subscribe { state = it.data!! } // CUR use case instead
         view.stopClicked().subscribe { state = GoState.Idle() }
         view.waitClicked().subscribe { state = GoState.Waiting() }
-        view.rideClicked().subscribe { state = GoState.Riding(Car("aaa", 1), state.lengthMinutes) }//CUR: get car
+        view.rideClicked().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
     }
 
     private fun updateState(newState: GoState) {
@@ -69,7 +69,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     }
 
     override fun showState(state: GoState) {
-        activity.title = getString(ui.getSateCaption(state))
+        activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR update title every minute
         ui.wait.visibility = if (state is GoState.Idle) View.VISIBLE else View.GONE
         ui.stop.visibility = if (ui.wait.visibility == View.VISIBLE) View.GONE else View.VISIBLE
     }

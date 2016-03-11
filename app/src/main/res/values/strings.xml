@@ -6,6 +6,8 @@
     <string name="wait">Wait</string>
     <string name="ride">Ride</string>
 
+    <string name="min">min</string>
+
     <string name="idle">Idle</string>
     <string name="waiting">Waiting</string>
     <string name="riding">Riding</string>

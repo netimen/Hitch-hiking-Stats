@@ -64,31 +64,31 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         Firebase.setAndroidContext(this)
         Firebase.getDefaultConfig().isPersistenceEnabled = true
         val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
-        ref.removeValue()
-        val ridesRef = ref.child("rides")
-        val trips = arrayOf("Big Trip", "Middle Trip", "Small Trip")
-        val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
-        val r = Random()
-        val rides = ArrayList<Ride>()
-        val repo: RidesRepo = FirebaseRidesRepo()
-        val carsRepo: CarsRepo = FirebaseCarsRepo()
-        async() {
-            for (i in 1..4)
-                repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
-
-            (trips + "").forEach { checkRepTrip(repo, rides, it) }
-            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
-
-            Thread.sleep(2000)
-            val rr = rides.removeAt(0)
-            repo.remove(rr)
-            Thread.sleep(2000)
-
-            checkRepTrip(repo, rides, "")
-            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
-        }
+//        ref.removeValue()
+//        val ridesRef = ref.child("rides")
+//        val trips = arrayOf("Big Trip", "Middle Trip", "Small Trip")
+//        val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
+//        val r = Random()
+//        val rides = ArrayList<Ride>()
+//        val repo: RidesRepo = FirebaseRidesRepo()
+//        val carsRepo: CarsRepo = FirebaseCarsRepo()
+//        async() {
+//            for (i in 1..4)
+//                repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+//
+//            (trips + "").forEach { checkRepTrip(repo, rides, it) }
+//            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+//            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+//
+//            Thread.sleep(2000)
+//            val rr = rides.removeAt(0)
+//            repo.remove(rr)
+//            Thread.sleep(2000)
+//
+//            checkRepTrip(repo, rides, "")
+//            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+//            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+//        }
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
         //        removeRide(ref, rides[0])
@@ -123,24 +123,24 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        })
         /**
          */
-        ridesRef.addChildEventListener(object : ChildEventListener {
-            override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
-            }
-
-            override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
-            }
-
-            override fun onChildAdded(p0: DataSnapshot?, p1: String?) {
-                error("CCC ${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
-            }
-
-            override fun onChildRemoved(p0: DataSnapshot?) {
-            }
-
-            override fun onCancelled(p0: FirebaseError?) {
-            }
-
-        })
+//        ridesRef.addChildEventListener(object : ChildEventListener {
+//            override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
+//            }
+//
+//            override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
+//            }
+//
+//            override fun onChildAdded(p0: DataSnapshot?, p1: String?) {
+//                error("CCC ${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
+//            }
+//
+//            override fun onChildRemoved(p0: DataSnapshot?) {
+//            }
+//
+//            override fun onCancelled(p0: FirebaseError?) {
+//            }
+//
+//        })
         //        ridesRef.addValueEventListener(object : ValueEventListener {
         //            override fun onCancelled(p0: FirebaseError?) {
         //                throw UnsupportedOperationException()

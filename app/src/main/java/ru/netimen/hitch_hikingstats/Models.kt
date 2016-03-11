@@ -31,26 +31,27 @@ data class Ride internal constructor(override var id: String?, val trip: String,
 
 data class Trip(val carMinutes: Int, val waitMinutes: Int, val minWait: Int, val maxWait: Int)
 
-private class LengthMinutesDelegate<T>() {
-    private val creationMillis = System.currentTimeMillis()
-    operator fun getValue(t: T, property: KProperty<*>): Int = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - creationMillis).toInt()
+private class LengthMinutesDelegate<T>(initialMinutes: Int) {
+    private var creationMillis = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(initialMinutes.toLong())
+
+    operator fun getValue(t: T, property: KProperty<*>): Int = Math.max(TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - creationMillis).toInt(), 1)
 }
 
-sealed class GoState {
+sealed class GoState(initialMinutes: Int) { // CUR store creationMillis, not initialMinutes
     //    abstract class StateWithLength() : GoState() {
     //    open val lengthMinutes: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) as Int
     //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
 
-    open val lengthMinutes: Int by LengthMinutesDelegate()
+    open val lengthMinutes: Int by LengthMinutesDelegate(initialMinutes)
     //    open val lengthMinutes: Int by lazy { }
     //        get() = ((System.currentTimeMillis() - field) / 60 / 1000) as Int
     //    }
 
-    class Idle : GoState() {
+    class Idle : GoState(0) {
         override val lengthMinutes = 0
     }
 
-    class Waiting : GoState()
-    class Riding(val car: Car, val waitMinutes: Int) : GoState()
+    class Waiting(initialMinutes: Int = 0) : GoState(initialMinutes)
+    class Riding( val carName: String, val waitMinutes: Int, initialMinutes: Int = 0) : GoState(initialMinutes)
 
 }

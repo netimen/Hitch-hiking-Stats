@@ -97,13 +97,20 @@ abstract class HasFirebase internal constructor(url: String) {
     protected val firebase = Firebase(url)
 }
 
+fun <T> singleValueResultObservable(ref: Query, extractData: (DataSnapshot) -> T) = RxFirebase.getInstance()
+        .observeSingleValue(ref)
+        .first() // RxFirebase observeSingleValue has a bug https://github.com/spirosoik/Android-RxFirebase/issues/2
+        .map(extractData)
+        .wrapResult { ErrorInfo(it) }
+
 abstract class FirebaseRepo<T> internal constructor(url: String) : HasFirebase(url), HitchRepo<T> {
 
-    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
-            .observeSingleValue(query.listParams.trip.notEmpty()?.let { tripObjectsRef(it) } ?: objectsRef())
-            .first() // RxFirebase observeSingleValue has a bug https://github.com/spirosoik/Android-RxFirebase/issues/2
-            .map({ extractObjects(it) })
-            .wrapResult { ErrorInfo(it) }
+    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = singleValueResultObservable(query.listParams.trip.notEmpty()?.let { tripObjectsRef(it) } ?: objectsRef(), { extractObjects(it) })
+    //    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<T>, ErrorInfo>> = RxFirebase.getInstance()
+    //            .observeSingleValue(query.listParams.trip.notEmpty()?.let { tripObjectsRef(it) } ?: objectsRef())
+    //            .first() // RxFirebase observeSingleValue has a bug https://github.com/spirosoik/Android-RxFirebase/issues/2
+    //            .map { extractObjects(it) }
+    //            .wrapResult { ErrorInfo(it) }
 
     override fun get(id: String): Observable<Result<T, ErrorInfo>> = throw UnsupportedOperationException()
 
@@ -167,7 +174,7 @@ class FirebaseRidesRepo(url: String) : FirebaseIdRepo<Ride>(url), RidesRepo {
 
     override fun onRemove(t: Ride) = changeRideExtraData(firebase, t, ::removeRideExtraData)
 
-    override fun extractObject(key: String, value: Any) = (value as Map<*, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, (it["waitMinutes"] as Long).toInt(), (it["carMinutes"] as Long).toInt()) }
+    override fun extractObject(key: String, value: Any) = (value as Map<*, *>).let { Ride(it["id"] as String, it["trip"] as String, it["car"] as String, int(it["waitMinutes"]), int(it["carMinutes"])) }
 
     override fun objectsRef(root: Firebase): Firebase = root.child("rides")
 
@@ -179,21 +186,30 @@ class FirebaseCarsRepo(url: String) : FirebaseRepo<Car>(url), CarsRepo {
 
     override fun objectsRef(root: Firebase): Firebase = root.child("cars")
 
-    override fun extractObject(key: String, value: Any) = Car(key, (value as Long).toInt())
+    override fun extractObject(key: String, value: Any) = Car(key, int(value))
 }
 
 class FirebaseStateRepo(url: String) : HasFirebase(url), StateRepo {
     constructor() : this(URL)
 
-    override fun get(): Observable<Result<GoState, ErrorInfo>> {
-        throw UnsupportedOperationException()
-    }
+    override fun get(): Observable<Result<GoState, ErrorInfo>> = singleValueResultObservable(stateChild(), {
+        val values = it.value as HashMap<*, *>
+        val lengthMinutes = int(values["lengthMinutes"])
+        if (lengthMinutes == 0) return@singleValueResultObservable GoState.Idle()
+
+        val carName = values["carName"] as? String
+        if (carName.isNullOrEmpty()) return@singleValueResultObservable GoState.Waiting(lengthMinutes)
+        GoState.Riding(carName!!, int(values["waitMinutes"]), lengthMinutes)
+    })
 
     override fun set(t: GoState) {
-        firebase.child("state").setValue(t)
+        stateChild().setValue(t)
     }
+
+    private fun stateChild() = firebase.child("state")
 }
 
 private val URL = "https://dazzling-heat-4079.firebaseio.com/" // cUr support "/test" as main ref
 
+private fun int(v: Any?) = (v as? Long)?.toInt() ?: 0
 
