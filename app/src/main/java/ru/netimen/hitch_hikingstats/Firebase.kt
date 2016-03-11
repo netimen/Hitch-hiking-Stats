@@ -39,7 +39,7 @@ private fun MutableData.subtract(v: Int) {
     value = initialValue() - v
 }
 
-private fun MutableData.initialValue() = if (value == null) 0 else value as Long
+private fun MutableData.initialValue() = long(value)
 
 private fun Firebase.trips() = child("trips")
 private fun Firebase.trip(key: String) = trips().child(key)
@@ -68,7 +68,7 @@ private fun removeRideExtraData(ref: Firebase, ride: Ride) {
         ref.child("carMinutes").runTransaction { subtract(ride.carMinutes) }
         ref.car(ride.car).runTransaction {
             subtract(1)
-            if (value as Long == 0L)
+            if (long(value) == 0L)
                 ref.car(ride.car).removeValue()
         }
     }
@@ -194,12 +194,12 @@ class FirebaseStateRepo(url: String) : HasFirebase(url), StateRepo {
 
     override fun get(): Observable<Result<GoState, ErrorInfo>> = singleValueResultObservable(stateChild(), {
         val values = it.value as HashMap<*, *>
-        val lengthMinutes = int(values["lengthMinutes"])
-        if (lengthMinutes == 0) return@singleValueResultObservable GoState.Idle()
+        val creationMillis = long(values["creationMillis"])
+        if (creationMillis == 0L) return@singleValueResultObservable GoState.Idle()
 
         val carName = values["carName"] as? String
-        if (carName.isNullOrEmpty()) return@singleValueResultObservable GoState.Waiting(lengthMinutes)
-        GoState.Riding(carName!!, int(values["waitMinutes"]), lengthMinutes)
+        if (carName.isNullOrEmpty()) return@singleValueResultObservable GoState.Waiting(creationMillis)
+        GoState.Riding(carName!!, int(values["waitMinutes"]), creationMillis)
     })
 
     override fun set(t: GoState) {
@@ -211,5 +211,6 @@ class FirebaseStateRepo(url: String) : HasFirebase(url), StateRepo {
 
 private val URL = "https://dazzling-heat-4079.firebaseio.com/" // cUr support "/test" as main ref
 
-private fun int(v: Any?) = (v as? Long)?.toInt() ?: 0
+private fun long(v: Any?) = (v as? Long ?: 0L)
+private fun int(v: Any?) = long(v).toInt()
 

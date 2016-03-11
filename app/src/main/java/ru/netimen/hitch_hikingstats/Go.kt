@@ -80,7 +80,7 @@ class GoFragmentUI : AnkoComponent<Fragment> {
     lateinit var car: EditText
     lateinit var ride: Button
     lateinit var wait: Button
-    lateinit var stop: Button
+    lateinit var stop: Button // CUR: discard button
 
     fun getSateCaption(state: GoState) = when (state) {
         is GoState.Idle -> R.string.idle
