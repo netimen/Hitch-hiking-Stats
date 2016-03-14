@@ -50,7 +50,7 @@ ext.deps = [
         , rxBinding    : 'com.jakewharton.rxbinding:rxbinding-kotlin:' + versions.rxBinding
 //        , rxBindingV4          : 'com.jakewharton.rxbinding:rxbinding-support-v4:' + versions.rxBinding
 //        , rxBindingRecycler    : 'com.jakewharton.rxbinding:rxbinding-recyclerview-v7:' + versions.rxBinding
-//        , rxLifecycle          : 'com.trello:rxlifecycle:' + versions.rxLifecycle
+        , rxLifecycle          : 'com.trello:rxlifecycle-kotlin:0.5.0'// + versions.rxLifecycle
 //        , rxLifecycleComponents: 'com.trello:rxlifecycle-components:' + versions.rxLifecycle
 //        , rxPreferences        : 'com.f2prateek.rx.preferences:rx-preferences:1.0.1'
 

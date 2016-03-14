@@ -1,5 +1,7 @@
 package ru.netimen.hitch_hikingstats.lib
 
+import rx.Observable
+
 /**
  * Copyright (c) 2016 Bookmate.
  * All Rights Reserved.
@@ -8,7 +10,9 @@ package ru.netimen.hitch_hikingstats.lib
  * Date:   26.02.16
  */
 
-interface MvpView
+interface MvpView {
+    fun <T> bindToLifeCycle() : Observable.Transformer<T, T>
+}
 
 interface DataView<T, E> : MvpView {
     fun showLoading()

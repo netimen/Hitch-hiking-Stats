@@ -14,12 +14,10 @@ import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import rx.Subscription
-import rx.android.schedulers.AndroidSchedulers
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
 import uy.kohesive.injekt.injectLazy
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 /**
@@ -40,33 +38,37 @@ interface GoView : MvpView {
     fun updateTitle(state: GoState)
 }
 
-// cur independent vm layer, loading data while fragment is being created
+// cur independent vm layer, loading data while fragment is being created, router
+// cur notification
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
+    val updateTitleSubscription: Subscription? = null
+
     val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
     val saveState: (GoState) -> Unit by injectLazy()
     val addRide: (GoState) -> Unit by injectLazy()
-    val updateTitleSubscription: Subscription? = null
 
     init {
-        loadState().onData { state = it }.subscribe()
+//        loadState().onData { state = it }.subscribe()
 
-        view.stopClicked().subscribe {
+        view.stopClicked().bindToLifeCycle().subscribe {
             addRide(state)
             state = GoState.Idle()
         }
-        view.waitClicked().subscribe { state = GoState.Waiting() }
-        view.rideClicked().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
+        view.waitClicked().bindToLifeCycle().subscribe { state = GoState.Waiting() }
+        view.rideClicked().bindToLifeCycle().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
     }
 
     private fun updateState(newState: GoState) {
         saveState(state)
 
         updateTitleSubscription?.unsubscribe()
-        Observable.timer(1, TimeUnit.MINUTES).repeat().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
+        //        Observable.timer(1, TimeUnit.MINUTES).repeat().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
 
         view.showState(newState)
     }
+
+//    fun correctUnsubscribe(observable: Observable<*>) = 0
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
