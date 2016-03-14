@@ -36,15 +36,15 @@ open class ResultObservable<T, E>(observable: Observable<Result<T, E>>) : Branch
 }
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
-fun <T, E, O : ResultObservable<T, E>> O.onData(onData: (T) -> Unit) = branch({ it.isSuccessful() }, onData, { it.data!! })
+fun <T, E, O : ResultObservable<T, E>> O.onData(onData: (T) -> Unit) = branch({ it is Result.Success<T, E> }, onData, { (it as Result.Success<T, E>).data })
 
-fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch({ !it.isSuccessful() }, onError, { it.error!! })
+fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch({ it is Result.Failure<T, E> }, onError, { (it as Result.Failure<T, E>).error })
 
 
 open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable)
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
-fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ it.data?.let(noDataPredicate) ?: false }, { onNoData() }, {})
+fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ if (it is Result.Success<T, E>) !noDataPredicate(it.data) else false}, { onNoData() }, {})
 
 fun <T, E, O : LoadObservable<List<T>, E>> O.onNoData(onNoData: () -> Unit) = this.onNoData({ it.isEmpty() }, onNoData)
 

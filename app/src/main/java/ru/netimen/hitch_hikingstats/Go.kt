@@ -14,6 +14,7 @@ import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
 import ru.netimen.hitch_hikingstats.lib.MvpView
 import ru.netimen.hitch_hikingstats.lib.Presenter
+import ru.netimen.hitch_hikingstats.lib.Result
 import rx.Observable
 import kotlin.properties.Delegates
 
@@ -39,7 +40,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
 
     init {
-        FirebaseStateRepo().get().subscribe { state = it.data!! } // CUR use case instead
+        FirebaseStateRepo().get().subscribe { state = (it as Result.Success<GoState, ErrorInfo>).data} // CUR use case instead
         view.stopClicked().subscribe { state = GoState.Idle() }
         view.waitClicked().subscribe { state = GoState.Waiting() }
         view.rideClicked().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car

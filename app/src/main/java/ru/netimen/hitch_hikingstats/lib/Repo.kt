@@ -1,12 +1,8 @@
 package ru.netimen.hitch_hikingstats.lib
 
-import ru.netimen.hitch_hikingstats.Car
-import ru.netimen.hitch_hikingstats.IdObject
-import ru.netimen.hitch_hikingstats.Ride
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import java.util.*
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -18,16 +14,16 @@ import java.util.*
 
 interface ListParams
 
-data class Result<T, E>(val data: T? = null, val error: E? = null) { // cur make it a sealed class or enum
-
-    fun isSuccessful(): Boolean = data != null
+sealed class Result<out T, out E> {
+    class Success<T, E>(val data: T) : Result<T, E>()
+    class Failure<T, E>(val error: E) : Result<T, E>()
 }
 
-private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result<T, E>(it) }.onErrorReturn { Result<T, E>(error = errorInfoFactory(it)) } }
+private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (Observable<T>) -> Observable<Result<T, E>> = { it.map { Result.Success<T, E>(it) as Result<T, E> }.onErrorReturn { Result.Failure<T, E>(errorInfoFactory(it)) } }
 
 fun <T, E> Observable<T>.wrapResult(errorInfoFactory: (Throwable) -> E) = compose(wrapResultTransformer<T, E>(errorInfoFactory))
 
-interface SingleRepo<T,E> {
+interface SingleRepo<T, E> {
 
     fun get(): Observable<Result<T, E>>
 

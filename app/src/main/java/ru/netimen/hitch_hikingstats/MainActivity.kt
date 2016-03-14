@@ -173,12 +173,12 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
-    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
-        repo.getList(Repo.Query(TripListParams(t)))
-                .map { it.data!! }
-                .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
-                .subscribe { error { "AAAAA check trip: $t $it" } }
-    }
+//    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
+//        repo.getList(Repo.Query(TripListParams(t)))
+//                .map { it.data!! }
+//                .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
+//                .subscribe { error { "AAAAA check trip: $t $it" } }
+//    }
 
 
 }
