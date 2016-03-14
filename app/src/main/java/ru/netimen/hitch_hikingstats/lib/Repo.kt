@@ -23,12 +23,6 @@ private fun <T, E> wrapResultTransformer(errorInfoFactory: (Throwable) -> E): (O
 
 fun <T, E> Observable<T>.wrapResult(errorInfoFactory: (Throwable) -> E) = compose(wrapResultTransformer<T, E>(errorInfoFactory))
 
-interface SingleRepo<T, E> {
-
-    fun get(): Observable<Result<T, E>>
-
-    fun set(t: T)
-}
 
 interface Repo<T, E, L : ListParams> {
 
@@ -82,4 +76,21 @@ open class GetListUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, prot
     override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getList(Repo.Query(listParams, page, perPage))
 }
 
+interface ValueRepo<T, E> {
 
+    fun get(): Observable<Result<T, E>>
+
+    fun set(t: T)
+}
+
+abstract class ValueRepoUseCase<T, E, R : ValueRepo<*, E>>(protected val repo: R) : ResultUseCase<T, E>(SchedulingStrategy.ioMain())
+
+open class GetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
+
+    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
+}
+
+open class SetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
+
+    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
+}

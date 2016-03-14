@@ -2,7 +2,7 @@ package ru.netimen.hitch_hikingstats
 
 import ru.netimen.hitch_hikingstats.lib.ListParams
 import ru.netimen.hitch_hikingstats.lib.Repo
-import ru.netimen.hitch_hikingstats.lib.SingleRepo
+import ru.netimen.hitch_hikingstats.lib.ValueRepo
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -24,4 +24,4 @@ interface RidesRepo : IdRepo<Ride>
 
 interface CarsRepo : HitchRepo<Car>
 
-interface StateRepo: SingleRepo<GoState, ErrorInfo>
+interface StateRepo: ValueRepo<GoState, ErrorInfo>

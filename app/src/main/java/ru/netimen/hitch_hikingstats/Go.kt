@@ -11,11 +11,12 @@ import android.widget.RelativeLayout
 import com.jakewharton.rxbinding.view.clicks
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
-import ru.netimen.hitch_hikingstats.lib.MvpFragment
-import ru.netimen.hitch_hikingstats.lib.MvpView
-import ru.netimen.hitch_hikingstats.lib.Presenter
-import ru.netimen.hitch_hikingstats.lib.Result
+import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
+import uy.kohesive.injekt.InjektMain
+import uy.kohesive.injekt.api.InjektRegistrar
+import uy.kohesive.injekt.api.fullType
+import uy.kohesive.injekt.injectLazy
 import kotlin.properties.Delegates
 
 /**
@@ -35,27 +36,44 @@ interface GoView : MvpView {
     fun showState(state: GoState)
 }
 
+// getState: () -> Observable<State>, setState: (State)->Unit, createRide: (State) -> Unit
+// schedulingStrategy
+
 // cur independent vm layer, loading data while fragment is being created
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
+    val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
+    val saveState: (GoState) -> Unit by injectLazy()
+    val addRide: (GoState) -> Unit by injectLazy()
 
     init {
-        FirebaseStateRepo().get().subscribe { state = (it as Result.Success<GoState, ErrorInfo>).data} // CUR use case instead
-        view.stopClicked().subscribe { state = GoState.Idle() }
+        loadState().onData { state = it }.subscribe()
+
+        view.stopClicked().subscribe {
+            addRide(state)
+            state = GoState.Idle()
+        }
         view.waitClicked().subscribe { state = GoState.Waiting() }
         view.rideClicked().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
     }
 
     private fun updateState(newState: GoState) {
-        FirebaseStateRepo().set(newState)
+        saveState(state)
         view.showState(newState)
+    }
+
+    companion object : InjektMain() {
+        override fun InjektRegistrar.registerInjectables() {
+            addSingleton(fullType(), { LoadObservable(FirebaseStateRepo().get()) })
+            addSingleton(fullType(), { state: GoState -> FirebaseStateRepo().set(state) })
+        }
     }
 }
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     private val ui = GoFragmentUI()
 
-    override fun createPresenter() = GoPresenter(this)
+    override fun createPresenter() = GoPresenter(this) // cur use injekt here
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
