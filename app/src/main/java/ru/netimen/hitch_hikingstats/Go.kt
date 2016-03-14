@@ -13,10 +13,13 @@ import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
+import rx.Subscription
+import rx.android.schedulers.AndroidSchedulers
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 /**
@@ -34,10 +37,8 @@ interface GoView : MvpView {
     fun carSelected(): Observable<String>
 
     fun showState(state: GoState)
+    fun updateTitle(state: GoState)
 }
-
-// getState: () -> Observable<State>, setState: (State)->Unit, createRide: (State) -> Unit
-// schedulingStrategy
 
 // cur independent vm layer, loading data while fragment is being created
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
@@ -45,6 +46,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
     val saveState: (GoState) -> Unit by injectLazy()
     val addRide: (GoState) -> Unit by injectLazy()
+    val updateTitleSubscription: Subscription? = null
 
     init {
         loadState().onData { state = it }.subscribe()
@@ -59,6 +61,10 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
 
     private fun updateState(newState: GoState) {
         saveState(state)
+
+        updateTitleSubscription?.unsubscribe()
+        Observable.timer(1, TimeUnit.MINUTES).repeat().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
+
         view.showState(newState)
     }
 
@@ -73,7 +79,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     private val ui = GoFragmentUI()
 
-    override fun createPresenter() = GoPresenter(this) // cur use injekt here
+    override fun createPresenter() = GoPresenter(this)
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
@@ -88,9 +94,13 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     }
 
     override fun showState(state: GoState) {
-        activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR update title every minute
+        updateTitle(state)
         ui.wait.visibility = if (state is GoState.Idle) View.VISIBLE else View.GONE
         ui.stop.visibility = if (ui.wait.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+    }
+
+    override fun updateTitle(state: GoState) {
+        activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 
 }
