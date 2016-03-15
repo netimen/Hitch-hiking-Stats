@@ -9,7 +9,6 @@ buildscript {
     }
     dependencies {
         classpath deps.kotlinPlugin
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -63,9 +62,5 @@ dependencies {
     compile deps.firebase
 
     testCompile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-}
-repositories {
-    mavenCentral()
 }
 
