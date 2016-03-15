@@ -61,6 +61,8 @@ dependencies {
 
     compile deps.firebase
 
-    testCompile 'junit:junit:4.12'
+    testCompile deps.testJUnit
+    testCompile deps.testMockito
+    testCompile deps.testHamcrest
 }
 

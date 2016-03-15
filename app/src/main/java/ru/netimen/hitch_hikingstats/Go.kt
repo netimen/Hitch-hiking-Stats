@@ -44,12 +44,12 @@ interface GoView : MvpView {
 // cur independent vm layer, loading data while fragment is being created, router
 // cur notification
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
-    var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
-    val updateTitleSubscription: Subscription? = null
+    private var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
+    private val updateTitleSubscription: Subscription? = null
 
-    val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
-    val saveState: (GoState) -> Unit by injectLazy()
-    val addRide: (GoState) -> Unit by injectLazy()
+    private val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
+    private val saveState: (GoState) -> Unit by injectLazy()
+    private val addRide: (GoState) -> Unit by injectLazy()
 
     init {
         loadState().onData { state = it }.subscribe() // cur lifecycle here
@@ -71,12 +71,6 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
         view.showState(newState)
     }
 
-    companion object : InjektMain() {
-        override fun InjektRegistrar.registerInjectables() {
-            addSingleton(fullType(), { LoadObservable(FirebaseStateRepo().get()) })
-            addSingleton(fullType(), { state: GoState -> FirebaseStateRepo().set(state) })
-        }
-    }
 }
 
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
@@ -108,6 +102,12 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     override fun <T> bindToLifeCycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
 
+    companion object : InjektMain() {
+        override fun InjektRegistrar.registerInjectables() {
+            addSingleton(fullType(), { LoadObservable(FirebaseStateRepo().get()) })
+            addSingleton(fullType(), { state: GoState -> FirebaseStateRepo().set(state) })
+        }
+    }
 }
 
 class GoFragmentUI : AnkoComponent<Fragment> {
