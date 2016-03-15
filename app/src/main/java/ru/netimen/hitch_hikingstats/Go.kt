@@ -9,15 +9,18 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.RelativeLayout
 import com.jakewharton.rxbinding.view.clicks
+import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import rx.Subscription
+import rx.android.schedulers.AndroidSchedulers
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 /**
@@ -49,7 +52,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
     val addRide: (GoState) -> Unit by injectLazy()
 
     init {
-//        loadState().onData { state = it }.subscribe()
+        loadState().onData { state = it }.subscribe() // cur lifecycle here
 
         view.stopClicked().bindToLifeCycle().subscribe {
             addRide(state)
@@ -63,12 +66,10 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
         saveState(state)
 
         updateTitleSubscription?.unsubscribe()
-        //        Observable.timer(1, TimeUnit.MINUTES).repeat().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
+        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
 
         view.showState(newState)
     }
-
-//    fun correctUnsubscribe(observable: Observable<*>) = 0
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
@@ -105,6 +106,8 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
         activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 
+    override fun <T> bindToLifeCycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
+
 }
 
 class GoFragmentUI : AnkoComponent<Fragment> {
@@ -133,13 +136,13 @@ class GoFragmentUI : AnkoComponent<Fragment> {
                 alignParentRight()
                 centerVertically()
             }
-            car = editText {
-                hintResource = R.string.toyota
-            }.lparams(width = dip(120)) {
-                margin = buttonMargin
-                sameBottom(ride)
-                leftOf(ride)
-            }
+            //            car = editText {
+            //                hintResource = R.string.toyota
+            //            }.lparams(width = dip(120)) {
+            //                margin = buttonMargin
+            //                sameBottom(ride)
+            //                leftOf(ride)
+            //            }
             val waitStopLparams: RelativeLayout.LayoutParams.() -> Unit = {
                 margin = buttonMargin
                 alignParentRight()

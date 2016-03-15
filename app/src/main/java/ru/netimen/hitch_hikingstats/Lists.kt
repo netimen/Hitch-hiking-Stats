@@ -13,6 +13,7 @@ import org.jetbrains.anko.imageResource
 import org.jetbrains.anko.margin
 import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.lib.*
+import rx.Observable
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -38,6 +39,8 @@ class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView
             }
         }
     }.view
+
+    override fun <T> bindToLifeCycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
 }
 
 class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, RidesFragment>(view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
@@ -45,6 +48,8 @@ class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, Rid
 class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() {
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
     override fun createPresenter() = CarsPresenter(this)
+
+    override fun <T> bindToLifeCycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
 }
 
 class CarsPresenter(view: CarsFragment) : PagingPresenter<Car, ErrorInfo, CarsFragment>(view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))
