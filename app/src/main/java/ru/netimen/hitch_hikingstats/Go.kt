@@ -12,10 +12,10 @@ import com.jakewharton.rxbinding.view.clicks
 import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
+import org.jetbrains.anko.support.v4.onUiThread
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import rx.Subscription
-import rx.android.schedulers.AndroidSchedulers
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
@@ -44,10 +44,10 @@ interface GoView : MvpView {
 // cur independent vm layer, loading data while fragment is being created, router
 // cur notification
 class GoPresenter(view: GoView) : Presenter<GoView>(view) {
-    private var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new -> updateState(new) }
+    private var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new ->  updateState(new) } // cur don't save the same state again!
     private val updateTitleSubscription: Subscription? = null
 
-    private val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy()
+    private val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy() // CUR why do we have view object and separate methods here?
     private val saveState: (GoState) -> Unit by injectLazy()
     private val addRide: (GoState) -> Unit by injectLazy()
 
@@ -66,7 +66,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
         saveState(state)
 
         updateTitleSubscription?.unsubscribe()
-        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().observeOn(AndroidSchedulers.mainThread()).subscribe { view.updateTitle(state) }
+        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
 
         view.showState(newState)
     }
@@ -90,13 +90,13 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
         throw UnsupportedOperationException()
     }
 
-    override fun showState(state: GoState) {
+    override fun showState(state: GoState) = onUiThread {
         updateTitle(state)
         ui.wait.visibility = if (state is GoState.Idle) View.VISIBLE else View.GONE
         ui.stop.visibility = if (ui.wait.visibility == View.VISIBLE) View.GONE else View.VISIBLE
     }
 
-    override fun updateTitle(state: GoState) {
+    override fun updateTitle(state: GoState) = onUiThread {
         activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 
