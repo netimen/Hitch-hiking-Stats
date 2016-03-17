@@ -16,10 +16,11 @@ import org.jetbrains.anko.support.v4.onUiThread
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import rx.Subscription
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
-import uy.kohesive.injekt.injectLazy
+import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
@@ -41,30 +42,35 @@ interface GoView : MvpView {
     fun updateTitle(state: GoState)
 }
 
-// cur independent vm layer, loading data while fragment is being created, router
+interface GoLogic {
+    fun loadState(): LoadObservable<GoState, ErrorInfo>
+    fun saveState(state: GoState)
+
+    fun addRide(state: GoState)
+}
+
 // cur notification
-class GoPresenter(view: GoView) : Presenter<GoView>(view) {
-    private var state by Delegates.observable<GoState>(GoState.Idle()) { prop, old, new ->  updateState(new) } // cur don't save the same state again!
+class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
+    private var state by Delegates.countedObservable<GoState>(GoState.Idle()) { prop, old, new, setCount ->
+        if (setCount > 0)
+            logic.saveState(new)
+
+        onStateUpdated(new)
+    }
     private val updateTitleSubscription: Subscription? = null
 
-    private val loadState: () -> LoadObservable<GoState, ErrorInfo> by injectLazy() // CUR why do we have view object and separate methods here?
-    private val saveState: (GoState) -> Unit by injectLazy()
-    private val addRide: (GoState) -> Unit by injectLazy()
-
     init {
-        loadState().onData { state = it }.subscribe() // cur lifecycle here
+        logic.loadState().onData { state = it }.subscribe() // cur lifecycle here
 
         view.stopClicked().bindToLifeCycle().subscribe {
-            addRide(state)
+            logic.addRide(state)
             state = GoState.Idle()
         }
         view.waitClicked().bindToLifeCycle().subscribe { state = GoState.Waiting() }
         view.rideClicked().bindToLifeCycle().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
     }
 
-    private fun updateState(newState: GoState) {
-        saveState(state)
-
+    private fun onStateUpdated(newState: GoState) {
         updateTitleSubscription?.unsubscribe()
         Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
 
@@ -76,7 +82,7 @@ class GoPresenter(view: GoView) : Presenter<GoView>(view) {
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     private val ui = GoFragmentUI()
 
-    override fun createPresenter() = GoPresenter(this)
+    override fun createPresenter() = GoPresenter(this, Injekt.get())
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
@@ -104,8 +110,16 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
-            addSingleton(fullType(), { LoadObservable(FirebaseStateRepo().get()) })
-            addSingleton(fullType(), { state: GoState -> FirebaseStateRepo().set(state) })
+            addSingleton(fullType(), { object: GoLogic {
+                override fun loadState(): LoadObservable<GoState, ErrorInfo> = LoadObservable(FirebaseStateRepo().get())
+
+                override fun saveState(state: GoState) = FirebaseStateRepo().set(state)
+
+                override fun addRide(state: GoState) {
+                    throw UnsupportedOperationException()
+                }
+
+            }})
         }
     }
 }

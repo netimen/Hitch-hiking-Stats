@@ -1,0 +1,14 @@
+@startuml
+
+interface View
+interface BusinessLogic
+interface Router
+
+View o-- ViewStatic
+Presenter o-- View
+Presenter o-- BusinessLogic
+Presenter o-- Router
+ViewImpl o-- Presenter
+ViewImpl <|-- View
+
+@enduml

@@ -22,6 +22,7 @@ import org.mockito.AdditionalMatchers
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatcher
 import org.mockito.Mockito
+import org.mockito.internal.matchers.CapturingMatcher
 import org.mockito.internal.matchers.InstanceOf
 
 /**
@@ -33,34 +34,39 @@ import org.mockito.internal.matchers.InstanceOf
  * Date:   15.03.16
  */
 class GoPresenterTest {
-    // CUR: saved, title updated, ride created, state changes on buttons, observables are unsubscribed
+    // CUR:  title updated, ride created, observables are unsubscribed
     val view: GoView = mock()
+    val logic: GoLogic = mock()
+
     val stopClicked = PublishSubject<Unit>()
     val waitClicked = PublishSubject<Unit>()
     val rideClicked = PublishSubject<Unit>()
+
     lateinit var presenter: GoPresenter
 
     @Before
     fun setUp() {
-        RxAndroidPlugins.getInstance().registerSchedulersHook(object : RxAndroidSchedulersHook() {
-            override fun getMainThreadScheduler(): Scheduler? = Schedulers.immediate()
-        });
+//        RxAndroidPlugins.getInstance().registerSchedulersHook(object : RxAndroidSchedulersHook() {
+//            override fun getMainThreadScheduler(): Scheduler? = Schedulers.immediate()
+//        });
         `when`(view.bindToLifeCycle<GoState>()).thenReturn(Observable.Transformer<GoState, GoState>({ it }))
         `when`(view.stopClicked()).thenReturn(stopClicked) // cur automate creation of these subjects
         `when`(view.waitClicked()).thenReturn(waitClicked)
         `when`(view.rideClicked()).thenReturn(rideClicked)
     }
 
-    @After
-    fun tearDown() {
-    }
+//    @After
+//    fun tearDown() {
+//    }
 
     @Test
     fun testStateLoaded() {
         createPresenter(GoState.Idle())
 
-        verify(loadState).invoke()
-        verifyZeroInteractions(saveState) // checking we don't save the same state again
+        verify(logic).loadState()
+        verifyNoMoreInteractions(logic) // checking we don't save the same state again
+//        verify(logic, times(0)).saveState(any())
+//        verifyZeroInteractions(logic.) // checking we don't save the same state again
     }
 
     @Test
@@ -70,41 +76,42 @@ class GoPresenterTest {
         rideClicked.onNext(Unit)
         stopClicked.onNext(Unit)
 
-        verify(saveState).invoke(isA<GoState.Waiting>() ?: createInstance())
-        verify(saveState).invoke(isA<GoState.Riding>() ?: createInstance())
-        verify(saveState).invoke(isA<GoState.Idle>() ?: createInstance())
+//        verify(saveState).invoke(Mockito.argThat(CapturingMatcher<GoState>()) ?: createInstance())
+        verify(logic).saveState(isA<GoState.Waiting>() ?: createInstance()) // CUR more elegant sequence checking
+        verify(logic).saveState(isA<GoState.Riding>() ?: createInstance())
+        verify(logic).saveState(isA<GoState.Idle>() ?: createInstance())
 //                verify(saveState).invoke(eq())
 //        verify(saveState).invoke(Mockito.argThat(sequence(isA<GoState.Idle>(), isA<GoState.Waiting>())) ?: createInstance())
 //        verify(saveState, times(2)).invoke(Mockito.argThat(sequence<GoState>(InstanceOf(GoState.Idle::class.java), InstanceOf(GoState.Waiting::class.java))) ?: createInstance())
 //        verify(saveState).invoke(AdditionalMatchers.and(isA<GoState.Idle>(), isA<GoState.Waiting>()) ?: createInstance())
     }
 
-    private fun <T> sequence(vararg matchers: ArgumentMatcher<Any>): ArgumentMatcher<T> {
-        return object :ArgumentMatcher<T> {
-            var index = 0
-            override fun matches(p0: Any?): Boolean {
-                return matchers[index++].matches(p0)
-            }
-
-        }
-    }
+//    private fun <T> sequence(vararg matchers: ArgumentMatcher<Any>): ArgumentMatcher<T> {
+//        return object :ArgumentMatcher<T> {
+//            var index = 0
+//            override fun matches(p0: Any?): Boolean {
+//                return matchers[index++].matches(p0)
+//            }
+//
+//        }
+//    }
 
 
     private fun createPresenter(state: GoState) {
-        `when`(loadState()).thenReturn(LoadObservable(Observable.just(state).wrapResult { ErrorInfo(it) }))
-        presenter = GoPresenter(view)
+        `when`(logic.loadState()).thenReturn(LoadObservable(Observable.just(state).wrapResult { ErrorInfo(it) }))
+        presenter = GoPresenter(view, logic)
     }
 
-    companion object {
-        val loadState: () -> LoadObservable<GoState, ErrorInfo> = mock()
-        val saveState: (GoState) -> Unit = mock()
-
-        val injector = object : InjektMain() {
-
-            override fun InjektRegistrar.registerInjectables() {
-                addSingleton(fullType(), loadState)
-                addSingleton(fullType(), saveState)
-            }
-        }
-    }
+//    companion object {
+////        val loadState: () -> LoadObservable<GoState, ErrorInfo> = mock()
+////        val saveState: (GoState) -> Unit = mock()
+//
+//        val injector = object : InjektMain() {
+//
+//            override fun InjektRegistrar.registerInjectables() {
+//                addSingleton(fullType(), loadState)
+//                addSingleton(fullType(), saveState)
+//            }
+//        }
+//    }
 }

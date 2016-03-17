@@ -11,10 +11,6 @@ import android.view.View
  * Date:   03.03.16
  */
 
-fun <T, R> T?.onNull(blockIfNull: () -> R) = this?.let {} ?: blockIfNull
-
-fun String?.notEmpty() = if (isNullOrEmpty()) null else this
-
 inline fun View.stringArray(resource: Int): Array<out String> = context.stringArray(resource)
 fun Context.stringArray(resource: Int): Array<out String> = resources.getStringArray(resource)
 

@@ -37,14 +37,6 @@ import java.util.*
 import kotlin.reflect.KProperty
 
 
-class AddFieldDelegate<T, I>(private val defaultValue: I) {
-    private val fieldMap = HashMap<T, I>()
-
-    operator fun getValue(t: T, property: KProperty<*>) = fieldMap[t]?.apply { } ?: defaultValue
-
-    operator fun setValue(t: T, property: KProperty<*>, any: I) = fieldMap.put(t, any)
-}
-
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
     fun <T> compareLists(list1: List<T>, list2: List<T>): Boolean {
