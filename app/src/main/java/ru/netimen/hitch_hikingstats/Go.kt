@@ -110,7 +110,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
-            addSingleton(fullType(), { object: GoLogic {
+            addSingleton(fullType<GoLogic>(), object: GoLogic {
                 override fun loadState(): LoadObservable<GoState, ErrorInfo> = LoadObservable(FirebaseStateRepo().get())
 
                 override fun saveState(state: GoState) = FirebaseStateRepo().set(state)
@@ -119,7 +119,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
                     throw UnsupportedOperationException()
                 }
 
-            }})
+            })
         }
     }
 }

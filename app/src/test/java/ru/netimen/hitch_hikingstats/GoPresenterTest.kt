@@ -34,7 +34,7 @@ import org.mockito.internal.matchers.InstanceOf
  * Date:   15.03.16
  */
 class GoPresenterTest {
-    // CUR:  title updated, ride created, observables are unsubscribed
+    // CUR:  title updated, observables are unsubscribed
     val view: GoView = mock()
     val logic: GoLogic = mock()
 
@@ -65,8 +65,15 @@ class GoPresenterTest {
 
         verify(logic).loadState()
         verifyNoMoreInteractions(logic) // checking we don't save the same state again
-//        verify(logic, times(0)).saveState(any())
-//        verifyZeroInteractions(logic.) // checking we don't save the same state again
+    }
+
+    @Test
+    fun testRideAdded() {
+        val state = GoState.Riding("Toyota", 5)
+        createPresenter(state)
+        stopClicked.onNext(Unit)
+
+        verify(logic).addRide(state)
     }
 
     @Test
