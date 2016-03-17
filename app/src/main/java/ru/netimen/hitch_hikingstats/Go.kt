@@ -16,6 +16,7 @@ import org.jetbrains.anko.support.v4.onUiThread
 import ru.netimen.hitch_hikingstats.lib.*
 import rx.Observable
 import rx.Subscription
+import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -57,7 +58,7 @@ class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
 
         onStateUpdated(new)
     }
-    private val updateTitleSubscription: Subscription? = null
+    private var updateTitleSubscription: Subscription? = null
 
     init {
         logic.loadState().onData { state = it }.subscribe() // cur lifecycle here
@@ -72,7 +73,8 @@ class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
 
     private fun onStateUpdated(newState: GoState) {
         updateTitleSubscription?.unsubscribe()
-        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
+//        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
+        updateTitleSubscription = Observable.timer(1, TimeUnit.MINUTES, Schedulers.io()).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) } // https://groups.google.com/forum/#!topic/rxjava/Dz0kBH-RdAo
 
         view.showState(newState)
     }
