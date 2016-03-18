@@ -11,7 +11,7 @@ import rx.Observable
  */
 
 interface MvpView {
-    fun <T> bindToLifeCycle() : Observable.Transformer<T, T>
+    fun <T> bindToLifecycle() : Observable.Transformer<T, T>
 }
 
 interface DataView<T, E> : MvpView {

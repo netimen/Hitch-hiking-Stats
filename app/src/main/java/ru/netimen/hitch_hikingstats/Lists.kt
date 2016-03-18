@@ -40,7 +40,7 @@ class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView
         }
     }.view
 
-    override fun <T> bindToLifeCycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
+    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
 }
 
 class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, RidesFragment>(view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
@@ -49,7 +49,7 @@ class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() 
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
     override fun createPresenter() = CarsPresenter(this)
 
-    override fun <T> bindToLifeCycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
+    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
 }
 
 class CarsPresenter(view: CarsFragment) : PagingPresenter<Car, ErrorInfo, CarsFragment>(view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))

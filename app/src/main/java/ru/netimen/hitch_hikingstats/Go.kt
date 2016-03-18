@@ -63,17 +63,17 @@ class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
     init {
         logic.loadState().onData { state = it }.subscribe() // cur lifecycle here
 
-        view.stopClicked().bindToLifeCycle().subscribe {
+        view.stopClicked().bindToLifecycle().subscribe {
             logic.addRide(state)
             state = GoState.Idle()
         }
-        view.waitClicked().bindToLifeCycle().subscribe { state = GoState.Waiting() }
-        view.rideClicked().bindToLifeCycle().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
+        view.waitClicked().bindToLifecycle().subscribe { state = GoState.Waiting() }
+        view.rideClicked().bindToLifecycle().subscribe { state = GoState.Riding("Toyota", state.lengthMinutes) }//CUR: get car
     }
 
     private fun onStateUpdated(newState: GoState) {
         updateTitleSubscription?.unsubscribe()
-        updateTitleSubscription = Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
+        updateTitleSubscription = Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifecycle().subscribe { view.updateTitle(state) }
 
         view.showState(newState)
     }
@@ -107,7 +107,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
         activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 
-    override fun <T> bindToLifeCycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
+    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {

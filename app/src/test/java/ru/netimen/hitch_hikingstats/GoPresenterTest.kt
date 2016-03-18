@@ -1,10 +1,12 @@
 package ru.netimen.hitch_hikingstats
 
 import com.nhaarman.mockito_kotlin.*
+import com.trello.rxlifecycle.RxLifecycle
+import org.junit.Assert
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
-import org.junit.rules.TestRule
+import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import org.mockito.Mockito.`when`
@@ -19,6 +21,9 @@ import rx.plugins.RxJavaObservableExecutionHook
 import rx.plugins.RxJavaPlugins
 import rx.plugins.RxJavaSchedulersHook
 import rx.schedulers.TestScheduler
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,12 +34,15 @@ import java.util.concurrent.TimeUnit
  * Author: Dmitry Gordeev @dreamindustries.co>
  * Date:   15.03.16
  */
-class RxTestRule : TestRule {
+class RxTestRule : TestWatcher() {
     val backgroundScheduler = TestScheduler()
-    override fun apply(base: Statement?, p1: Description?): Statement? {
+    private val lifecycle by lazy { PublishSubject<Unit>() }
+    private val subscriptionsCollector = SubscriptionCollector()
+
+    override fun apply(base: Statement?, description: Description?): Statement? {
         RxJavaPlugins.getInstance().registerObservableExecutionHook(object : RxJavaObservableExecutionHook() {
             override fun <T : Any?> onSubscribeReturn(subscription: Subscription?): Subscription? {
-                return super.onSubscribeReturn<T>(subscription)
+                return subscription.apply { subscriptionsCollector.add(this) }
             }
         })
 
@@ -42,16 +50,44 @@ class RxTestRule : TestRule {
             override fun getComputationScheduler(): Scheduler? = EventLoopsScheduler()
         })
         RxJavaTestHacks.hackComputationScheduler(backgroundScheduler) // https://groups.google.com/forum/#!topic/rxjava/Dz0kBH-RdAo
-        return base
+
+        return super.apply(base, description)
+    }
+
+    override fun succeeded(description: Description?) {
+        lifecycle.onNext(Unit)
+        subscriptionsCollector.verifyAllSubscriptionsUnsubscribed()
+    }
+
+    fun <T> bindToLifecycle(): Observable.Transformer<T, T>? = RxLifecycle.bindUntilEvent(lifecycle, Unit)
+}
+
+class SubscriptionCollector {
+    val subscriptions = Collections.synchronizedMap(HashMap<Subscription, String>())
+
+    fun add(subscription: Subscription?) = subscriptions.put(subscription, getStackTraceString(Exception("Subscription still subscribed!")))
+
+    fun verifyAllSubscriptionsUnsubscribed() {
+        for ((subscription, trace)in subscriptions)
+            if (!subscription.isUnsubscribed)
+                Assert.fail("There was an non-unsubscribed subscription detected which was created at the following place:\n<-------------------- start unsubscribed stack -------------------->\n$trace<--------------------- end unsubscribed stack --------------------->")
+        subscriptions.clear()
     }
 }
 
+private fun getStackTraceString(tr: Throwable): String? {
+    val sw = StringWriter()
+    val pw = PrintWriter(sw)
+    tr.printStackTrace(pw)
+    pw.flush()
+    return sw.toString()
+}
+
 class GoPresenterTest {
-    // CUR: observables are unsubscribed
 
     companion object {
         @ClassRule @JvmField
-        val rxTestRule = RxTestRule()
+        val rxTest = RxTestRule()
     }
 
     val view: GoView = mock()
@@ -65,7 +101,7 @@ class GoPresenterTest {
 
     @Before
     fun setUp() {
-        `when`(view.bindToLifeCycle<GoState>()).thenReturn(Observable.Transformer<GoState, GoState>({ it }))
+        `when`(view.bindToLifecycle<Any>()).thenReturn(rxTest.bindToLifecycle())
         `when`(view.stopClicked()).thenReturn(stopClicked) // cur automate creation of these subjects
         `when`(view.waitClicked()).thenReturn(waitClicked)
         `when`(view.rideClicked()).thenReturn(rideClicked)
@@ -111,7 +147,7 @@ class GoPresenterTest {
         verify(view, never()).updateTitle(any())
 
         val minutes = 5L
-        rxTestRule.backgroundScheduler.advanceTimeBy(minutes, TimeUnit.MINUTES)
+        rxTest.backgroundScheduler.advanceTimeBy(minutes, TimeUnit.MINUTES)
         verify(view, times(minutes.toInt())).updateTitle(any())
     }
 
@@ -119,9 +155,9 @@ class GoPresenterTest {
     fun testTitleUpdatedTimerRestartsOnStateChanged() {
         createPresenter(GoState.Waiting())
 
-        rxTestRule.backgroundScheduler.advanceTimeBy(30, TimeUnit.SECONDS)
+        rxTest.backgroundScheduler.advanceTimeBy(30, TimeUnit.SECONDS)
         rideClicked.onNext(Unit)
-        rxTestRule.backgroundScheduler.advanceTimeBy(59, TimeUnit.SECONDS)
+        rxTest.backgroundScheduler.advanceTimeBy(59, TimeUnit.SECONDS)
 
         verify(view, never()).updateTitle(any())
     }
