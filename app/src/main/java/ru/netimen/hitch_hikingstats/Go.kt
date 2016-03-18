@@ -73,8 +73,7 @@ class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
 
     private fun onStateUpdated(newState: GoState) {
         updateTitleSubscription?.unsubscribe()
-//        Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
-        updateTitleSubscription = Observable.timer(1, TimeUnit.MINUTES, Schedulers.io()).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) } // https://groups.google.com/forum/#!topic/rxjava/Dz0kBH-RdAo
+        updateTitleSubscription = Observable.timer(1, TimeUnit.MINUTES).repeat().bindToLifeCycle().subscribe { view.updateTitle(state) }
 
         view.showState(newState)
     }

@@ -2,14 +2,20 @@ package ru.netimen.hitch_hikingstats
 
 import com.nhaarman.mockito_kotlin.*
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import org.mockito.Mockito.`when`
 import ru.netimen.hitch_hikingstats.lib.LoadObservable
 import ru.netimen.hitch_hikingstats.lib.wrapResult
 import rx.Observable
 import rx.Scheduler
-import rx.internal.util.ScalarSynchronousObservable
+import rx.Subscription
+import rx.internal.schedulers.EventLoopsScheduler
 import rx.lang.kotlin.PublishSubject
+import rx.plugins.RxJavaObservableExecutionHook
 import rx.plugins.RxJavaPlugins
 import rx.plugins.RxJavaSchedulersHook
 import rx.schedulers.TestScheduler
@@ -23,8 +29,31 @@ import java.util.concurrent.TimeUnit
  * Author: Dmitry Gordeev @dreamindustries.co>
  * Date:   15.03.16
  */
+class RxTestRule : TestRule {
+    val backgroundScheduler = TestScheduler()
+    override fun apply(base: Statement?, p1: Description?): Statement? {
+        RxJavaPlugins.getInstance().registerObservableExecutionHook(object : RxJavaObservableExecutionHook() {
+            override fun <T : Any?> onSubscribeReturn(subscription: Subscription?): Subscription? {
+                return super.onSubscribeReturn<T>(subscription)
+            }
+        })
+
+        RxJavaPlugins.getInstance().registerSchedulersHook(object : RxJavaSchedulersHook() {
+            override fun getComputationScheduler(): Scheduler? = EventLoopsScheduler()
+        })
+        RxJavaTestHacks.hackComputationScheduler(backgroundScheduler) // https://groups.google.com/forum/#!topic/rxjava/Dz0kBH-RdAo
+        return base
+    }
+}
+
 class GoPresenterTest {
     // CUR: observables are unsubscribed
+
+    companion object {
+        @ClassRule @JvmField
+        val rxTestRule = RxTestRule()
+    }
+
     val view: GoView = mock()
     val logic: GoLogic = mock()
 
@@ -32,19 +61,10 @@ class GoPresenterTest {
     val waitClicked = PublishSubject<Unit>()
     val rideClicked = PublishSubject<Unit>()
 
-    val backgroundScheduler = TestScheduler()
-
     lateinit var presenter: GoPresenter
 
     @Before
     fun setUp() {
-        RxJavaPlugins.getInstance().registerSchedulersHook(object : RxJavaSchedulersHook() {
-            //            override fun getComputationScheduler(): Scheduler? = backgroundScheduler
-                        override fun getIOScheduler(): Scheduler? = backgroundScheduler // waiting for this: https://groups.google.com/forum/#!topic/rxjava/Dz0kBH-RdAo
-        })
-        //        RxAndroidPlugins.getInstance().registerSchedulersHook(object : RxAndroidSchedulersHook() {
-        //            override fun getMainThreadScheduler(): Scheduler? = Schedulers.immediate()
-        //        });
         `when`(view.bindToLifeCycle<GoState>()).thenReturn(Observable.Transformer<GoState, GoState>({ it }))
         `when`(view.stopClicked()).thenReturn(stopClicked) // cur automate creation of these subjects
         `when`(view.waitClicked()).thenReturn(waitClicked)
@@ -91,7 +111,7 @@ class GoPresenterTest {
         verify(view, never()).updateTitle(any())
 
         val minutes = 5L
-        backgroundScheduler.advanceTimeBy(minutes, TimeUnit.MINUTES)
+        rxTestRule.backgroundScheduler.advanceTimeBy(minutes, TimeUnit.MINUTES)
         verify(view, times(minutes.toInt())).updateTitle(any())
     }
 
@@ -99,9 +119,9 @@ class GoPresenterTest {
     fun testTitleUpdatedTimerRestartsOnStateChanged() {
         createPresenter(GoState.Waiting())
 
-        backgroundScheduler.advanceTimeBy(30, TimeUnit.SECONDS)
+        rxTestRule.backgroundScheduler.advanceTimeBy(30, TimeUnit.SECONDS)
         rideClicked.onNext(Unit)
-        backgroundScheduler.advanceTimeBy(59, TimeUnit.SECONDS)
+        rxTestRule.backgroundScheduler.advanceTimeBy(59, TimeUnit.SECONDS)
 
         verify(view, never()).updateTitle(any())
     }
