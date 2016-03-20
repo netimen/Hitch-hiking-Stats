@@ -13,11 +13,8 @@ import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4.onUiThread
-import ru.netimen.hitch_hikingstats.lib.LoadObservable
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
-import ru.netimen.hitch_hikingstats.presentation.GoLogic
-import ru.netimen.hitch_hikingstats.presentation.GoPresenter
-import ru.netimen.hitch_hikingstats.presentation.GoView
+import ru.netimen.hitch_hikingstats.presentation.*
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.InjektMain

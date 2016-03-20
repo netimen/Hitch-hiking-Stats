@@ -1,6 +1,5 @@
 package ru.netimen.hitch_hikingstats
 
-import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.TabLayout
 import android.support.v4.app.Fragment
@@ -8,33 +7,15 @@ import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.GravityCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewManager
-import android.widget.*
-import com.firebase.client.ChildEventListener
-import com.firebase.client.DataSnapshot
+import android.widget.LinearLayout
 import com.firebase.client.Firebase
-import com.firebase.client.FirebaseError
 import org.jetbrains.anko.*
-import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
-import org.jetbrains.anko.recyclerview.v7.recyclerView
-import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
-import ru.netimen.hitch_hikingstats.lib.MvpFragment
-import ru.netimen.hitch_hikingstats.lib.MvpView
-import ru.netimen.hitch_hikingstats.lib.Presenter
-import ru.netimen.hitch_hikingstats.lib.Repo
-import rx.Observable
 import java.util.*
-import kotlin.reflect.KProperty
 
 
 class MainActivity : AppCompatActivity(), AnkoLogger {

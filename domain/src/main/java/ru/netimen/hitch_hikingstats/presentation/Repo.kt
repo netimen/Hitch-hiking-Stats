@@ -1,8 +1,9 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.presentation
 
-import ru.netimen.hitch_hikingstats.lib.ListParams
-import ru.netimen.hitch_hikingstats.lib.Repo
-import ru.netimen.hitch_hikingstats.lib.ValueRepo
+import ru.netimen.hitch_hikingstats.Car
+import ru.netimen.hitch_hikingstats.GoState
+import ru.netimen.hitch_hikingstats.IdObject
+import ru.netimen.hitch_hikingstats.Ride
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -14,7 +15,7 @@ import ru.netimen.hitch_hikingstats.lib.ValueRepo
 
 class TripListParams(val trip: String) : ListParams
 
-class ErrorInfo(val t: Throwable)
+class ErrorInfo(val t: Throwable) // cur move to presentation
 
 interface HitchRepo<T> : Repo<T, ErrorInfo, TripListParams>
 

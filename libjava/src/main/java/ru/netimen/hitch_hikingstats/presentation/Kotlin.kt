@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.presentation
 
 import java.util.*
 import kotlin.properties.Delegates

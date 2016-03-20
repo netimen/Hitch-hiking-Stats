@@ -12,7 +12,9 @@ import org.jetbrains.anko.frameLayout
 import org.jetbrains.anko.imageResource
 import org.jetbrains.anko.margin
 import org.jetbrains.anko.support.v4.UI
-import ru.netimen.hitch_hikingstats.lib.*
+import ru.netimen.hitch_hikingstats.lib.ListFragment
+import ru.netimen.hitch_hikingstats.lib.SimpleListAdapter
+import ru.netimen.hitch_hikingstats.presentation.*
 import rx.Observable
 
 /**
@@ -23,11 +25,12 @@ import rx.Observable
  * Date:   03.03.16
  */
 
-class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView>() {
+class RidesFragment : ListFragment<Ride, ErrorInfo, RidesPresenter, RidesFragment, RideView>() {
     private lateinit var add: View
     override val adapter = object : SimpleListAdapter<Ride, RideView>({ RideView(it.context) }, { rideView, ride -> rideView.bind(ride) }) {}// CUR make interface bindable
-//    override var presenter = RidesPresenter(this) // CUR make base fragment instantiate presenter
+    //    override var presenter = RidesPresenter(this) // CUR make base fragment instantiate presenter
     override fun createPresenter() = RidesPresenter(this)
+
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
         frameLayout {
             addView(super.onCreateView(inflater, container, savedInstanceState))
@@ -40,16 +43,16 @@ class RidesFragment : ListFragment<Ride, RidesPresenter, RidesFragment, RideView
         }
     }.view
 
-    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
+    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({ it })
 }
 
 class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, RidesFragment>(view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
 
-class CarsFragment : ListFragment<Car, CarsPresenter, CarsFragment, TextView>() {
+class CarsFragment : ListFragment<Car, ErrorInfo, CarsPresenter, CarsFragment, TextView>() {
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
     override fun createPresenter() = CarsPresenter(this)
 
-    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({it})
+    override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({ it })
 }
 
 class CarsPresenter(view: CarsFragment) : PagingPresenter<Car, ErrorInfo, CarsFragment>(view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))

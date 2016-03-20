@@ -1,6 +1,6 @@
 package ru.netimen.hitch_hikingstats
 
-import ru.netimen.hitch_hikingstats.lib.*
+import ru.netimen.hitch_hikingstats.presentation.*
 import rx.Observable
 import java.util.*
 

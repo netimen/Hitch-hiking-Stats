@@ -1,21 +1,20 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.presentation
 
-import com.trello.rxlifecycle.RxLifecycle
 import junit.framework.Assert
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import rx.Observable
 import rx.Scheduler
 import rx.Subscription
 import rx.internal.schedulers.EventLoopsScheduler
+import rx.lang.kotlin.PublishSubject
 import rx.plugins.RxJavaObservableExecutionHook
 import rx.plugins.RxJavaPlugins
 import rx.plugins.RxJavaSchedulersHook
 import rx.schedulers.TestScheduler
 import java.io.PrintWriter
 import java.io.StringWriter
-import rx.Observable
-import rx.lang.kotlin.PublishSubject
 import java.util.*
 
 /**
@@ -51,7 +50,7 @@ class RxTestRule : TestWatcher() {
         subscriptionsCollector.verifyAllSubscriptionsUnsubscribed()
     }
 
-    fun <T> bindToLifecycle(): Observable.Transformer<T, T>? = RxLifecycle.bindUntilEvent(lifecycle, Unit)
+    fun <T> bindToLifecycle() = Observable.Transformer<T, T> { source -> source?.takeUntil(lifecycle) }
 }
 
 class SubscriptionCollector {

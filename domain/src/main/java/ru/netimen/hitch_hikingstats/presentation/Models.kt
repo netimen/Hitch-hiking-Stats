@@ -1,5 +1,6 @@
 package ru.netimen.hitch_hikingstats
 
+import ru.netimen.hitch_hikingstats.presentation.notEmpty
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KProperty
 
@@ -17,7 +18,7 @@ interface IdObject {
     var id: String?
 }
 
-data class Ride internal constructor(override var id: String?, val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : IdObject {
+data class Ride constructor(override var id: String?, val trip: String, val car: String, val waitMinutes: Int, val carMinutes: Int) : IdObject { // CUR make this constructor inaccessible
 
     constructor(trip: String, car: String, waitMinutes: Int, carMinutes: Int) : this(null, trip, car, waitMinutes, carMinutes)
 

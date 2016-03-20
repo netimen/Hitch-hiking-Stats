@@ -1,7 +1,6 @@
-package ru.netimen.hitch_hikingstats.lib
+package ru.netimen.hitch_hikingstats.presentation
 
 import rx.Observable
-import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 
 /**
@@ -44,7 +43,8 @@ interface SchedulingStrategy<T> : Observable.Transformer<T, T> {
     companion object Factory {
 
         fun <T> ioMain() = object : SchedulingStrategy<T> {
-            override fun call(p0: Observable<T>?): Observable<T>? = p0?.observeOn(AndroidSchedulers.mainThread())?.subscribeOn(Schedulers.io())
+            override fun call(p0: Observable<T>?): Observable<T>? = p0?.subscribeOn(Schedulers.io())
+            //            override fun call(p0: Observable<T>?): Observable<T>? = p0?.observeOn(AndroidSchedulers.mainThread())?.subscribeOn(Schedulers.io())
         }
 
         fun <T> justThisThread() = object : SchedulingStrategy<T> {

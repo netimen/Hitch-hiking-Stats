@@ -1,7 +1,6 @@
 package ru.netimen.hitch_hikingstats.lib
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -11,10 +10,6 @@ import android.widget.ProgressBar
 import org.jetbrains.anko.progressBar
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.UI
-import org.jetbrains.anko.support.v4.ctx
-import ru.netimen.hitch_hikingstats.ErrorInfo
-import ru.netimen.hitch_hikingstats.lib.OneVisibleChildLayout
-import ru.netimen.hitch_hikingstats.lib.oneVisibleChildLayout
 import java.util.*
 
 /**
@@ -25,14 +20,14 @@ import java.util.*
  * Date:   03.03.16
  */
 
-abstract class MvpFragment<P : Presenter<in V>, V : MvpFragment<P, V>> : Fragment(), MvpView {
-    protected lateinit  var presenter: P
+abstract class MvpFragment<P : ru.netimen.hitch_hikingstats.presentation.Presenter<in V>, V : MvpFragment<P, V>> : android.support.v4.app.Fragment(), ru.netimen.hitch_hikingstats.presentation.MvpView {
+    protected lateinit var presenter: P
 
-    abstract fun createPresenter() : P
+    abstract fun createPresenter(): P
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         presenter = createPresenter()
-//        presenter.attachView(this as V)
+        //        presenter.attachView(this as V)
     }
 }
 
@@ -55,7 +50,7 @@ abstract class SimpleListAdapter<T, ItemView : View>(protected val createView: (
     override fun onBindViewHolder(viewHolder: ViewHolder<ItemView>?, position: Int): Unit = viewHolder?.run { bindView(view, data[position]) } ?: Unit
 }
 
-abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, ItemView>, ItemView : View> : MvpFragment<P, V>(), PagingView<T, ErrorInfo> {
+abstract class ListFragment<T, E, P : ru.netimen.hitch_hikingstats.presentation.Presenter<in V>, V : ListFragment<T, E, P, V, ItemView>, ItemView : View> : MvpFragment<P, V>(), ru.netimen.hitch_hikingstats.presentation.PagingView<T, E> {
     lateinit var list: RecyclerView
     lateinit var loader: ProgressBar
     lateinit var container: OneVisibleChildLayout // CUR dataLayout
@@ -72,7 +67,7 @@ abstract class ListFragment<T, P : Presenter<in V>, V : ListFragment<T, P, V, It
         throw UnsupportedOperationException()
     }
 
-    override fun showError(error: ErrorInfo) {
+    override fun showError(error: E) {
         throw UnsupportedOperationException()
     }
 

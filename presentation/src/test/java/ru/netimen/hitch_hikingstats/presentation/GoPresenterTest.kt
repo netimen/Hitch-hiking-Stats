@@ -1,14 +1,12 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.presentation
 
 import com.nhaarman.mockito_kotlin.*
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import org.mockito.Mockito.`when`
-import ru.netimen.hitch_hikingstats.lib.LoadObservable
-import ru.netimen.hitch_hikingstats.lib.wrapResult
+import ru.netimen.hitch_hikingstats.GoState
 import rx.Observable
-import rx.Subscriber
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit
 

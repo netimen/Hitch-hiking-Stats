@@ -1,8 +1,7 @@
-package ru.netimen.hitch_hikingstats.lib
+package ru.netimen.hitch_hikingstats.presentation
 
-import java.util.*
 import rx.Observable
-import rx.lang.kotlin.observable
+import java.util.*
 
 /**
  * Copyright (c) 2016 Bookmate.

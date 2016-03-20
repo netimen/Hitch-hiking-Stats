@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats.lib
+package ru.netimen.hitch_hikingstats.presentation
 
 import rx.Observable
 
