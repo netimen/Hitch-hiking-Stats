@@ -1,6 +1,7 @@
 package ru.netimen.hitch_hikingstats.presentation
 
-import ru.netimen.hitch_hikingstats.GoState
+import ru.netimen.hitch_hikingstats.domain.ErrorInfo
+import ru.netimen.hitch_hikingstats.domain.GoState
 import rx.Observable
 import rx.Subscription
 import java.util.concurrent.TimeUnit

@@ -5,7 +5,8 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import org.mockito.Mockito.`when`
-import ru.netimen.hitch_hikingstats.GoState
+import ru.netimen.hitch_hikingstats.domain.ErrorInfo
+import ru.netimen.hitch_hikingstats.domain.GoState
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit

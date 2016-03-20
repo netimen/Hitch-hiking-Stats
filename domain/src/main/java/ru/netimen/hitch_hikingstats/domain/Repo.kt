@@ -1,9 +1,8 @@
-package ru.netimen.hitch_hikingstats.presentation
+package ru.netimen.hitch_hikingstats.domain
 
-import ru.netimen.hitch_hikingstats.Car
-import ru.netimen.hitch_hikingstats.GoState
-import ru.netimen.hitch_hikingstats.IdObject
-import ru.netimen.hitch_hikingstats.Ride
+import ru.netimen.hitch_hikingstats.presentation.ListParams
+import ru.netimen.hitch_hikingstats.presentation.Repo
+import ru.netimen.hitch_hikingstats.presentation.ValueRepo
 
 /**
  * Copyright (c) 2016 Bookmate.

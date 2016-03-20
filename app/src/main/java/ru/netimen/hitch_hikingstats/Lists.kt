@@ -12,9 +12,11 @@ import org.jetbrains.anko.frameLayout
 import org.jetbrains.anko.imageResource
 import org.jetbrains.anko.margin
 import org.jetbrains.anko.support.v4.UI
+import ru.netimen.hitch_hikingstats.domain.*
 import ru.netimen.hitch_hikingstats.lib.ListFragment
 import ru.netimen.hitch_hikingstats.lib.SimpleListAdapter
-import ru.netimen.hitch_hikingstats.presentation.*
+import ru.netimen.hitch_hikingstats.presentation.GetListUseCase
+import ru.netimen.hitch_hikingstats.presentation.PagingPresenter
 import rx.Observable
 
 /**

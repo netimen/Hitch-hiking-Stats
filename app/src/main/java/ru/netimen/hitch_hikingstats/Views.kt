@@ -6,6 +6,7 @@ import android.widget.TextView
 import org.jetbrains.anko.alignParentLeft
 import org.jetbrains.anko.alignParentRight
 import org.jetbrains.anko.textView
+import ru.netimen.hitch_hikingstats.domain.Ride
 
 /**
  * Copyright (c) 2016 Bookmate.

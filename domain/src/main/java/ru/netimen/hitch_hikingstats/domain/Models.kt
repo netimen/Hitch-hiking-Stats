@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.domain
 
 import ru.netimen.hitch_hikingstats.presentation.notEmpty
 import java.util.concurrent.TimeUnit
