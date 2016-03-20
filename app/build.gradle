@@ -1,17 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-buildscript {
-    ext.kotlin_version = versions.kotlin
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath deps.kotlinPlugin
-    }
-}
-
 android {
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
@@ -29,9 +18,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
     packagingOptions {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE-FIREBASE.txt'
@@ -41,6 +27,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':presentation')
 
     compile deps.kotlin
     compile deps.kotlinAndroid

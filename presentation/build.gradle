@@ -3,17 +3,11 @@ apply plugin: 'kotlin'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
     compile deps.kotlin
-}
-buildscript {
-    ext.kotlin_version = versions.kotlin
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath deps.kotlinPlugin
-    }
-}
-sourceSets {
-    main.java.srcDirs += 'src/main/kotlin'
+    compile deps.rxKotlin
+
+    testCompile deps.testJUnit
+    testCompile deps.testMockito
+    testCompile deps.testHamcrest
 }
