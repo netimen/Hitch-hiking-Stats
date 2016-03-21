@@ -11,6 +11,8 @@ android {
         targetSdkVersion versions.targetSdk
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -52,5 +54,11 @@ dependencies {
     testCompile deps.testJUnit
     testCompile deps.testMockito
     testCompile deps.testHamcrest
+    androidTestCompile (deps.testEspressoRunner) {
+        exclude module: 'support-annotations'
+    }
+    androidTestCompile (deps.testEspresso) {
+        exclude module: 'support-annotations'
+    }
 }
 
