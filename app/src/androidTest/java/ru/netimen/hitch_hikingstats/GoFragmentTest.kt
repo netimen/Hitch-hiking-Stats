@@ -30,39 +30,37 @@ private inline fun <reified T: Fragment>getFragmentByClass(activity : AppCompatA
 
 @RunWith(AndroidJUnit4::class)
 class GoFragmentTest {
-//    @get:Rule
-//    val rxTest = RxTestRule()
-
     @get:Rule
     val activityRule = ActivityTestRule(MainActivity::class.java)
 
     val fragment by lazy { getFragmentByClass<GoFragment>(activityRule.activity) }
 
-//    @Test
-//    fun testStateDisplayed() {
-//        fragment.showState(GoState.Idle())
-//        waitButton().check(matches(isDisplayed()));
-//        rideButton().check(matches(isDisplayed()));
-//        stopButton().check(matches(not(isDisplayed())));
-//        onView(withText(containsString(R.string.idle))).check(matches(isDisplayed()))
-//
-//        fragment.showState(GoState.Waiting())
-//        waitButton().check(matches(not(isDisplayed())));
-//        rideButton().check(matches(isDisplayed()));
-//        stopButton().check(matches(isDisplayed()));
-//        onView(withText(containsString(R.string.waiting))).check(matches(isDisplayed()))
-//
-//        fragment.showState(GoState.Riding("Toyota", 3))
-//        waitButton().check(matches(not(isDisplayed())));
-//        rideButton().check(matches(isDisplayed()));
-//        stopButton().check(matches(isDisplayed()));
-//        onView(withText(containsString(R.string.riding))).check(matches(isDisplayed()))
-//    }
+    @Test
+    fun testStateDisplayed() {
+        fragment.showState(GoState.Idle())
+        waitButton().check(matches(isDisplayed()));
+        rideButton().check(matches(isDisplayed()));
+        stopButton().check(matches(not(isDisplayed())));
+        onView(withText(containsString(R.string.idle))).check(matches(isDisplayed()))
+
+        fragment.showState(GoState.Waiting())
+        waitButton().check(matches(not(isDisplayed())));
+        rideButton().check(matches(isDisplayed()));
+        stopButton().check(matches(isDisplayed()));
+        onView(withText(containsString(R.string.waiting))).check(matches(isDisplayed()))
+
+        fragment.showState(GoState.Riding("Toyota", 3))
+        waitButton().check(matches(not(isDisplayed())));
+        rideButton().check(matches(isDisplayed()));
+        stopButton().check(matches(isDisplayed()));
+        onView(withText(containsString(R.string.riding))).check(matches(isDisplayed()))
+    }
 
     @Test
     fun testTitleUpdated() { // CUR make two test run
-//        fragment.updateTitle(GoState.Waiting(TimeUnit.MILLISECONDS.toMinutes()))
-//        onView(withText(containsString(minutes.toString()))).check(matches(isDisplayed()))
+        val minutes = 5L;
+        fragment.updateTitle(GoState.Waiting(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(minutes)))
+        onView(withText(containsString(minutes.toString()))).check(matches(isDisplayed()))
     }
 
     private fun containsString(id: Int) = containsString(getString(id))
