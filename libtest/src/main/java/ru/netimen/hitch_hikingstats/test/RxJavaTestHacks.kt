@@ -6,7 +6,7 @@
  * Author: Dmitry Gordeev @dreamindustries.co>
  * Date:   18.03.16
  */
-package ru.netimen.hitch_hikingstats.presentation
+package ru.netimen.hitch_hikingstats.test
 
 import rx.Scheduler
 import rx.internal.util.ScalarSynchronousObservable

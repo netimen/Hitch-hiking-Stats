@@ -51,9 +51,7 @@ dependencies {
 
     compile deps.firebase
 
-    testCompile deps.testJUnit
-    testCompile deps.testMockito
-    testCompile deps.testHamcrest
+    androidTestCompile project(':libtest')
     androidTestCompile (deps.testEspressoRunner) {
         exclude module: 'support-annotations'
     }

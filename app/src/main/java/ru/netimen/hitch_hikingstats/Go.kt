@@ -38,7 +38,7 @@ import uy.kohesive.injekt.api.get
 class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
     private val ui = GoFragmentUI()
 
-    override fun createPresenter() = GoPresenter(this, Injekt.get())
+    override fun createPresenter() = GoPresenter(this, Injekt.get()) // CUR inject presenter instead
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 

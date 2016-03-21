@@ -26,7 +26,7 @@ ext.versions = [ // http://stackoverflow.com/a/9547593/190148
                  , minSdk      : 21
                  , buildTools  : '23.0.2'
                  , support     : '23.2.0'
-                 , kotlin      : '1.0.0'
+                 , kotlin      : '1.0.1'
                  , anko        : '0.8.2'
                  , dagger      : '2.0.2'
                  , rxBinding   : '0.4.0'
@@ -41,8 +41,8 @@ ext.deps = [
 //        , daggerApt            : 'com.google.dagger:dagger-compiler:' + versions.dagger
 //        , jsr250               : 'javax.annotation:jsr250-api:1.0'
 //
-        , rxKotlin          : 'io.reactivex:rxkotlin:0.40.1'
-//        , rxJava               : 'io.reactivex:rxjava:1.0.17'
+        , rxKotlin          : 'io.reactivex:rxkotlin:0.55.0'
+//        , rxJava               : 'io.reactivex:rxjava:1.1.1'
         , rxAndroid         : 'io.reactivex:rxandroid:1.1.0'
         , rxBinding         : 'com.jakewharton.rxbinding:rxbinding-kotlin:' + versions.rxBinding
 //        , rxBindingV4          : 'com.jakewharton.rxbinding:rxbinding-support-v4:' + versions.rxBinding

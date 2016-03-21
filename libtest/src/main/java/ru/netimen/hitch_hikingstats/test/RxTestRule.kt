@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats.presentation
+package ru.netimen.hitch_hikingstats.test
 
 import junit.framework.Assert
 import org.junit.rules.TestWatcher

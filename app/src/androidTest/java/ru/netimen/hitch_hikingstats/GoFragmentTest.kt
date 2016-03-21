@@ -4,6 +4,7 @@ import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.assertion.ViewAssertions.matches
 import android.support.test.espresso.matcher.ViewMatchers.isDisplayed
 import android.support.test.espresso.matcher.ViewMatchers.withText
+import android.support.test.espresso.action.ViewActions.*
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
 import android.support.v4.app.Fragment
@@ -13,6 +14,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import ru.netimen.hitch_hikingstats.domain.GoState
+import ru.netimen.hitch_hikingstats.test.RxTestRule
+import java.util.concurrent.TimeUnit
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -27,30 +30,39 @@ private inline fun <reified T: Fragment>getFragmentByClass(activity : AppCompatA
 
 @RunWith(AndroidJUnit4::class)
 class GoFragmentTest {
+//    @get:Rule
+//    val rxTest = RxTestRule()
+
     @get:Rule
     val activityRule = ActivityTestRule(MainActivity::class.java)
 
     val fragment by lazy { getFragmentByClass<GoFragment>(activityRule.activity) }
 
+//    @Test
+//    fun testStateDisplayed() {
+//        fragment.showState(GoState.Idle())
+//        waitButton().check(matches(isDisplayed()));
+//        rideButton().check(matches(isDisplayed()));
+//        stopButton().check(matches(not(isDisplayed())));
+//        onView(withText(containsString(R.string.idle))).check(matches(isDisplayed()))
+//
+//        fragment.showState(GoState.Waiting())
+//        waitButton().check(matches(not(isDisplayed())));
+//        rideButton().check(matches(isDisplayed()));
+//        stopButton().check(matches(isDisplayed()));
+//        onView(withText(containsString(R.string.waiting))).check(matches(isDisplayed()))
+//
+//        fragment.showState(GoState.Riding("Toyota", 3))
+//        waitButton().check(matches(not(isDisplayed())));
+//        rideButton().check(matches(isDisplayed()));
+//        stopButton().check(matches(isDisplayed()));
+//        onView(withText(containsString(R.string.riding))).check(matches(isDisplayed()))
+//    }
+
     @Test
-    fun testStateDisplayed() {
-        fragment.showState(GoState.Idle())
-        waitButton().check(matches(isDisplayed()));
-        rideButton().check(matches(isDisplayed()));
-        stopButton().check(matches(not(isDisplayed())));
-        onView(withText(containsString(R.string.idle))).check(matches(isDisplayed()))
-
-        fragment.showState(GoState.Waiting())
-        waitButton().check(matches(not(isDisplayed())));
-        rideButton().check(matches(isDisplayed()));
-        stopButton().check(matches(isDisplayed()));
-        onView(withText(containsString(R.string.waiting))).check(matches(isDisplayed()))
-
-        fragment.showState(GoState.Riding("Toyota", 3))
-        waitButton().check(matches(not(isDisplayed())));
-        rideButton().check(matches(isDisplayed()));
-        stopButton().check(matches(isDisplayed()));
-        onView(withText(containsString(R.string.riding))).check(matches(isDisplayed()))
+    fun testTitleUpdated() { // CUR make two test run
+//        fragment.updateTitle(GoState.Waiting(TimeUnit.MILLISECONDS.toMinutes()))
+//        onView(withText(containsString(minutes.toString()))).check(matches(isDisplayed()))
     }
 
     private fun containsString(id: Int) = containsString(getString(id))

@@ -3,14 +3,13 @@ apply plugin: 'kotlin'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(':libjava')
-    compile project(':domain')
 
     compile deps.kotlin
     compile deps.rxKotlin
 
+    compile deps.testJUnit
+
     testCompile deps.testJUnit
     testCompile deps.testMockito
     testCompile deps.testHamcrest
-    testCompile project(':libtest')
 }

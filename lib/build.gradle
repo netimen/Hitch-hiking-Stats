@@ -29,18 +29,11 @@ dependencies {
 
     compile deps.anko
     compile deps.ankoV4
-//    compile deps.ankoDesign
     compile deps.ankoRecycler
 
     compile deps.supportDesign
 
     compile deps.rxKotlin
-//    compile deps.rxBinding
-//    compile deps.rxAndroid
-//    compile deps.rxLifecycle
 
-    testCompile deps.testJUnit
-    testCompile deps.testMockito
-    testCompile deps.testHamcrest
 }
 

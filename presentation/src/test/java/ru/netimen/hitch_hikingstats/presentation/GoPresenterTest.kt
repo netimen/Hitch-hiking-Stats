@@ -7,6 +7,7 @@ import org.junit.Test
 import org.mockito.Mockito.`when`
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
+import ru.netimen.hitch_hikingstats.test.RxTestRule
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit
