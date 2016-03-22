@@ -1,1 +1,1 @@
-include ':app', ':presentation', ':domain', ':lib', ':libjava', ':libtest'
+include ':app', ':presentation', ':domain', ':services', ':lib', ':libjava', ':libtest'
