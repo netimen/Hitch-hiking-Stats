@@ -1,20 +1,23 @@
 package ru.netimen.hitch_hikingstats
 
 import android.support.test.espresso.Espresso.onView
+import android.support.test.espresso.ViewInteraction
+import android.support.test.espresso.action.ViewActions.click
 import android.support.test.espresso.assertion.ViewAssertions.matches
 import android.support.test.espresso.matcher.ViewMatchers.isDisplayed
 import android.support.test.espresso.matcher.ViewMatchers.withText
-import android.support.test.espresso.action.ViewActions.*
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
-import org.hamcrest.CoreMatchers.*
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.not
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import ru.netimen.hitch_hikingstats.domain.GoState
-import ru.netimen.hitch_hikingstats.test.RxTestRule
+import rx.Observable
+import rx.observers.TestSubscriber
 import java.util.concurrent.TimeUnit
 
 /**
@@ -26,7 +29,7 @@ import java.util.concurrent.TimeUnit
  * Date:   21.03.16
  */
 
-private inline fun <reified T: Fragment>getFragmentByClass(activity : AppCompatActivity) = activity.supportFragmentManager.fragments.find { it is T } as T
+private inline fun <reified T : Fragment> getFragmentByClass(activity: AppCompatActivity) = activity.supportFragmentManager.fragments.find { it is T } as T
 
 @RunWith(AndroidJUnit4::class)
 class GoFragmentTest {
@@ -57,10 +60,29 @@ class GoFragmentTest {
     }
 
     @Test
-    fun testTitleUpdated() { // CUR make two test run
+    fun testTitleUpdated() {
         val minutes = 5L;
         fragment.updateTitle(GoState.Waiting(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(minutes)))
         onView(withText(containsString(minutes.toString()))).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun testButtonsObservables() {
+        testButtonObservable(waitButton(), fragment.waitClicked())
+        testButtonObservable(rideButton(), fragment.rideClicked())
+
+        fragment.showState(GoState.Waiting())
+        testButtonObservable(stopButton(), fragment.stopClicked())
+    }
+
+    private fun testButtonObservable(button: ViewInteraction, observable: Observable<Unit>) {
+        val testSubscriber = TestSubscriber<Unit>()
+        activityRule.activity.runOnUiThread {
+            observable.subscribe(testSubscriber)
+        }
+        button.perform(click())
+        testSubscriber.assertNoErrors()
+        testSubscriber.assertReceivedOnNext(listOf(Unit))
     }
 
     private fun containsString(id: Int) = containsString(getString(id))

@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Firebase.setAndroidContext(this)
-        Firebase.getDefaultConfig().isPersistenceEnabled = true
+//        Firebase.getDefaultConfig().isPersistenceEnabled = true
         val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
 //        ref.removeValue()
 //        val ridesRef = ref.child("rides")

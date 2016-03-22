@@ -25,7 +25,7 @@ class GoPresenterTest {
 
     companion object {
         @ClassRule @JvmField
-        val rxTest = RxTestRule()
+        val rxTest = RxTestRule()  // CUR separate to different rules
     }
 
     val view: GoView = mock()
