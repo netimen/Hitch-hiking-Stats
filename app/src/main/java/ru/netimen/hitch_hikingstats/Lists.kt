@@ -16,6 +16,7 @@ import ru.netimen.hitch_hikingstats.domain.*
 import ru.netimen.hitch_hikingstats.lib.ListFragment
 import ru.netimen.hitch_hikingstats.lib.SimpleListAdapter
 import ru.netimen.hitch_hikingstats.presentation.GetListUseCase
+import ru.netimen.hitch_hikingstats.presentation.Logic
 import ru.netimen.hitch_hikingstats.presentation.PagingPresenter
 import rx.Observable
 
@@ -27,11 +28,9 @@ import rx.Observable
  * Date:   03.03.16
  */
 
-class RidesFragment : ListFragment<Ride, ErrorInfo, RidesPresenter, RidesFragment, RideView>() {
+class RidesFragment : ListFragment<Ride, ErrorInfo, Logic, RidesPresenter, RidesFragment, RideView>() {
     private lateinit var add: View
     override val adapter = object : SimpleListAdapter<Ride, RideView>({ RideView(it.context) }, { rideView, ride -> rideView.bind(ride) }) {}// CUR make interface bindable
-    //    override var presenter = RidesPresenter(this) // CUR make base fragment instantiate presenter
-    override fun createPresenter() = RidesPresenter(this)
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
         frameLayout {
@@ -48,14 +47,13 @@ class RidesFragment : ListFragment<Ride, ErrorInfo, RidesPresenter, RidesFragmen
     override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({ it })
 }
 
-class RidesPresenter(view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, RidesFragment>(view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
+class RidesPresenter(logic: Logic, view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, Logic, RidesFragment>(logic, view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
 
-class CarsFragment : ListFragment<Car, ErrorInfo, CarsPresenter, CarsFragment, TextView>() {
+class CarsFragment : ListFragment<Car, ErrorInfo, Logic, CarsPresenter, CarsFragment, TextView>() {
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
-    override fun createPresenter() = CarsPresenter(this)
 
     override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({ it })
 }
 
-class CarsPresenter(view: CarsFragment) : PagingPresenter<Car, ErrorInfo, CarsFragment>(view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))
+class CarsPresenter(logic: Logic, view: CarsFragment) : PagingPresenter<Car, ErrorInfo, Logic, CarsFragment>(logic, view, GetListUseCase<Car, ErrorInfo, TripListParams, CarsRepo>(FirebaseCarsRepo(), TripListParams(""), 20))
 

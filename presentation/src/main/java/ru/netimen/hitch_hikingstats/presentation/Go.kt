@@ -2,6 +2,7 @@ package ru.netimen.hitch_hikingstats.presentation
 
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
+import ru.netimen.hitch_hikingstats.domain.StateRepo
 import rx.Observable
 import rx.Subscription
 import java.util.concurrent.TimeUnit
@@ -25,15 +26,15 @@ interface GoView : MvpView {
     fun updateTitle(state: GoState)
 }
 
-interface GoLogic {
-    fun loadState(): LoadObservable<GoState, ErrorInfo>
-    fun saveState(state: GoState)
+class GoLogic(private val stateRepo: StateRepo) : Logic {
+    fun loadState() = LoadObservable(stateRepo.get()) // CUR usecase?
+    fun saveState(state: GoState) = stateRepo.set(state)
 
-    fun addRide(state: GoState)
+    fun addRide(state: GoState) = TODO()
 }
 
 // cur notification
-class GoPresenter(view: GoView, val logic: GoLogic) : Presenter<GoView>(view) {
+class GoPresenter( logic: GoLogic, view: GoView) : Presenter<GoLogic, GoView>(logic, view) {
     private var state by Delegates.countedObservable<GoState>(GoState.Idle()) { prop, old, new, setCount ->
         if (setCount > 0)
             logic.saveState(new)

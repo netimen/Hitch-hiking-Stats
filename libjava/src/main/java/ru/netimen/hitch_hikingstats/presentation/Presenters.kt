@@ -11,11 +11,13 @@ import java.util.*
  * Date:   26.02.16
  */
 
-abstract class Presenter<V : MvpView>(protected val view: V) {
+interface Logic
+
+abstract class Presenter<L : Logic, V : MvpView>( protected val logic: L, protected val view: V) {
     fun Observable<*>.bindToLifecycle() = compose(view.bindToLifecycle())
 }
 
-open class PagingPresenter<T, E, V : PagingView<T, E>>(view: V, protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<V>(view) {
+open class PagingPresenter<T, E, L : Logic, V : PagingView<T, E>>(logic: L, view: V, protected val loadUseCase: ResultUseCase<List<T>, E>) : Presenter<L, V>(logic, view) {
     protected val objects = ArrayList<T>() // CUR store this in ViewModel
 
     fun load() {

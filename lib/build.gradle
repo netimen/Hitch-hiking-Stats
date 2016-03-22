@@ -20,7 +20,7 @@ dependencies {
     compile deps.kotlin
 //    compile deps.kotlinAndroid
 
-//    compile deps.injekt
+    compile deps.injekt
 
     compile deps.anko
     compile deps.ankoV4

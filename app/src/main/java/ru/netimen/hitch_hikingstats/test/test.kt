@@ -3,6 +3,7 @@ package ru.netimen.hitch_hikingstats.test
 import android.app.Fragment
 import android.os.Bundle
 import android.view.View
+import uy.kohesive.injekt.injectLazy
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -13,6 +14,10 @@ import android.view.View
  */
 
 
+//interface Presenter
+//abstract class MvpFragment<P: Presenter> : Fragment() {
+//    val presenter by injectLazy<P>() // error: Cannot use 'T' as reified type parameter. Use a class instead.
+//}
 //interface MvpView
 //
 ////abstract class BaseView<P> : MvpView {

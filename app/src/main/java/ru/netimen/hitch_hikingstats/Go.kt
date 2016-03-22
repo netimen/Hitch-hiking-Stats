@@ -35,10 +35,8 @@ import uy.kohesive.injekt.api.get
  * Date:   03.03.16
  */
 
-class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
-    private val ui = GoFragmentUI()
-
-    override fun createPresenter() = GoPresenter(this, Injekt.get()) // CUR inject presenter instead
+class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(), GoView {
+    private val ui = GoFragmentUI() // cur move to base class
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
@@ -66,16 +64,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment>(), GoView {
 
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
-            addSingleton(fullType<GoLogic>(), object: GoLogic {
-                override fun loadState(): LoadObservable<GoState, ErrorInfo> = LoadObservable(FirebaseStateRepo().get())
-
-                override fun saveState(state: GoState) = FirebaseStateRepo().set(state)
-
-                override fun addRide(state: GoState) {
-                    throw UnsupportedOperationException()
-                }
-
-            })
+            addSingleton(fullType(), FirebaseStateRepo())
         }
     }
 }
