@@ -11,12 +11,13 @@ import android.widget.ProgressBar
 import org.jetbrains.anko.progressBar
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.UI
-import org.jetbrains.anko.support.v4.ctx
 import ru.netimen.hitch_hikingstats.presentation.Logic
 import ru.netimen.hitch_hikingstats.presentation.MvpView
 import ru.netimen.hitch_hikingstats.presentation.PagingView
 import ru.netimen.hitch_hikingstats.presentation.Presenter
-import uy.kohesive.injekt.injectLazy
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.TypeReference
+import uy.kohesive.injekt.api.get
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -28,8 +29,22 @@ import kotlin.reflect.KClass
  * Date:   03.03.16
  */
 
-abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>> : Fragment(), MvpView {
-    protected val presenter : P by injectLazy()
+
+fun <T: Any> typeRef(type: KClass<T>) = object : TypeReference<T> {
+    override val type = type.java
+}
+
+fun <T : Any> injectLazy(type: KClass<T>): Lazy<T> {
+    return lazy { Injekt.get(forType = typeRef(type)) }
+}
+
+abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(presenterClass: KClass<P>) : Fragment(), MvpView {
+    protected val presenter by injectLazy(type = presenterClass)
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        presenter.toString() // so now presenter actually is created
+    }
 }
 
 class ViewHolder<V : View>(itemView: V) : RecyclerView.ViewHolder(itemView) {
@@ -51,7 +66,7 @@ abstract class SimpleListAdapter<T, ItemView : View>(protected val createView: (
     override fun onBindViewHolder(viewHolder: ViewHolder<ItemView>?, position: Int): Unit = viewHolder?.run { bindView(view, data[position]) } ?: Unit
 }
 
-abstract class ListFragment<T, E, L : Logic, P : Presenter<in L, in V>, V : ListFragment<T, E, L, P, V, ItemView>, ItemView : View> : MvpFragment<L, P, V>(), PagingView<T, E> {
+abstract class ListFragment<T, E, L : Logic, P : Presenter<in L, in V>, V : ListFragment<T, E, L, P, V, ItemView>, ItemView : View>(presenterClass: KClass<P>) : MvpFragment<L, P, V>(presenterClass), PagingView<T, E> {
     lateinit var list: RecyclerView
     lateinit var loader: ProgressBar
     lateinit var container: OneVisibleChildLayout // CUR dataLayout

@@ -1,6 +1,5 @@
 package ru.netimen.hitch_hikingstats.presentation
 
-import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
 import ru.netimen.hitch_hikingstats.domain.StateRepo
 import rx.Observable
@@ -34,7 +33,7 @@ class GoLogic(private val stateRepo: StateRepo) : Logic {
 }
 
 // cur notification
-class GoPresenter( logic: GoLogic, view: GoView) : Presenter<GoLogic, GoView>(logic, view) {
+class GoPresenter(logic: GoLogic, view: GoView) : Presenter<GoLogic, GoView>(logic, view) {
     private var state by Delegates.countedObservable<GoState>(GoState.Idle()) { prop, old, new, setCount ->
         if (setCount > 0)
             logic.saveState(new)

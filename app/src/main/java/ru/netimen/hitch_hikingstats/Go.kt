@@ -16,6 +16,7 @@ import org.jetbrains.anko.support.v4.onUiThread
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
+import ru.netimen.hitch_hikingstats.lib.typeRef
 import ru.netimen.hitch_hikingstats.presentation.GoLogic
 import ru.netimen.hitch_hikingstats.presentation.GoPresenter
 import ru.netimen.hitch_hikingstats.presentation.GoView
@@ -35,7 +36,7 @@ import uy.kohesive.injekt.api.get
  * Date:   03.03.16
  */
 
-class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(), GoView {
+class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(GoPresenter::class), GoView {
     private val ui = GoFragmentUI() // cur move to base class
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
@@ -65,6 +66,7 @@ class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(), GoView {
     companion object : InjektMain() {
         override fun InjektRegistrar.registerInjectables() {
             addSingleton(fullType(), FirebaseStateRepo())
+            addSingleton(fullType(), GoPresenter(GoLogic(Injekt.get()), Injekt.get()))
         }
     }
 }

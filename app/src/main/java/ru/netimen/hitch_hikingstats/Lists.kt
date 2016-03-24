@@ -28,7 +28,7 @@ import rx.Observable
  * Date:   03.03.16
  */
 
-class RidesFragment : ListFragment<Ride, ErrorInfo, Logic, RidesPresenter, RidesFragment, RideView>() {
+class RidesFragment : ListFragment<Ride, ErrorInfo, Logic, RidesPresenter, RidesFragment, RideView>(RidesPresenter::class) {
     private lateinit var add: View
     override val adapter = object : SimpleListAdapter<Ride, RideView>({ RideView(it.context) }, { rideView, ride -> rideView.bind(ride) }) {}// CUR make interface bindable
 
@@ -49,7 +49,7 @@ class RidesFragment : ListFragment<Ride, ErrorInfo, Logic, RidesPresenter, Rides
 
 class RidesPresenter(logic: Logic, view: RidesFragment) : PagingPresenter<Ride, ErrorInfo, Logic, RidesFragment>(logic, view, GetListUseCase<Ride, ErrorInfo, TripListParams, RidesRepo>(FirebaseRidesRepo(), TripListParams(""), 20)) // CUR presenters shouldn't know about fragment
 
-class CarsFragment : ListFragment<Car, ErrorInfo, Logic, CarsPresenter, CarsFragment, TextView>() {
+class CarsFragment : ListFragment<Car, ErrorInfo, Logic, CarsPresenter, CarsFragment, TextView>(CarsPresenter::class) {
     override val adapter = object : SimpleListAdapter<Car, TextView>({ TextView(it.context) }, { carView, car -> carView.text = car.toString() }) {}
 
     override fun <T> bindToLifecycle(): Observable.Transformer<T, T> = Observable.Transformer({ it })

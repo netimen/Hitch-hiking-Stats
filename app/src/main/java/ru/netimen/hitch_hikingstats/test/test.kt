@@ -1,9 +1,8 @@
 package ru.netimen.hitch_hikingstats.test
 
 import android.app.Fragment
-import android.os.Bundle
-import android.view.View
 import uy.kohesive.injekt.injectLazy
+import kotlin.reflect.KClass
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -14,9 +13,20 @@ import uy.kohesive.injekt.injectLazy
  */
 
 
-//interface Presenter
-//abstract class MvpFragment<P: Presenter> : Fragment() {
-//    val presenter by injectLazy<P>() // error: Cannot use 'T' as reified type parameter. Use a class instead.
+interface Presenter
+class IP : Presenter
+fun test() {
+    val i = IP::class
+    i.java
+    val ccc = IP::class.java
+}
+
+
+//abstract class MvpFragment<P : Presenter>(presenterClass: KClass<P>) : Fragment() {
+//    protected val presenter by injectLazy(type = presenterClass)
+//}
+//abstract class MvpFragment<P: Presenter>(presenterClass: Class<P>) : Fragment() {
+//////    val i: P by injectLazy(type=presenterClass)
 //}
 //interface MvpView
 //
