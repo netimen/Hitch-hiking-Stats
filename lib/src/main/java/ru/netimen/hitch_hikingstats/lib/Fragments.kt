@@ -16,8 +16,9 @@ import ru.netimen.hitch_hikingstats.presentation.MvpView
 import ru.netimen.hitch_hikingstats.presentation.PagingView
 import ru.netimen.hitch_hikingstats.presentation.Presenter
 import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.TypeReference
-import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.InjektMain
+import uy.kohesive.injekt.api.*
+import uy.kohesive.injekt.registry.default.DefaultRegistrar
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -30,7 +31,7 @@ import kotlin.reflect.KClass
  */
 
 
-fun <T: Any> typeRef(type: KClass<T>) = object : TypeReference<T> {
+fun <T : Any> typeRef(type: KClass<T>) = object : TypeReference<T> {
     override val type = type.java
 }
 
@@ -38,12 +39,21 @@ fun <T : Any> injectLazy(type: KClass<T>): Lazy<T> {
     return lazy { Injekt.get(forType = typeRef(type)) }
 }
 
-abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(presenterClass: KClass<P>) : Fragment(), MvpView {
-    protected val presenter by injectLazy(type = presenterClass)
+//abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(val presenterClass: KClass<P>, val presenterModule: InjektModule) : Fragment(), MvpView { // CUR fragment doesn't need presenter
+    abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView>(val presenterClass: KClass<V>, val presenterModule: InjektModule) : Fragment(), MvpView { // CUR fragment doesn't need presenter
+//        protected val presenter by injectLazy(type = presenterClass)
+//    val injectScope = InjektScope(DefaultRegistrar())
+    lateinit private var injectModule : InjektModule
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        presenter.toString() // so now presenter actually is created
+        injectModule = object : InjektScopedMain(InjektScope(DefaultRegistrar())) {
+            override fun InjektRegistrar.registerInjectables() {
+                addSingleton(typeRef(presenterClass), this@MvpFragment as V)
+                importModule(presenterModule)
+            }
+
+        }
     }
 }
 
@@ -66,43 +76,48 @@ abstract class SimpleListAdapter<T, ItemView : View>(protected val createView: (
     override fun onBindViewHolder(viewHolder: ViewHolder<ItemView>?, position: Int): Unit = viewHolder?.run { bindView(view, data[position]) } ?: Unit
 }
 
-abstract class ListFragment<T, E, L : Logic, P : Presenter<in L, in V>, V : ListFragment<T, E, L, P, V, ItemView>, ItemView : View>(presenterClass: KClass<P>) : MvpFragment<L, P, V>(presenterClass), PagingView<T, E> {
-    lateinit var list: RecyclerView
-    lateinit var loader: ProgressBar
-    lateinit var container: OneVisibleChildLayout // CUR dataLayout
-    protected abstract val adapter: SimpleListAdapter<T, ItemView>
-
-    override fun showLoading() = container.showChild(loader)
-
-    override fun showData(data: List<T>) {
-        container.showChild(list)
-        adapter.addData(data)
-    }
-
-    override fun showNoData() {
-        throw UnsupportedOperationException()
-    }
-
-    override fun showError(error: E) {
-        throw UnsupportedOperationException()
-    }
-
-    override fun showLoadingNextPage() {
-        throw UnsupportedOperationException()
-    }
-
-    override fun showErrorNextPage() {
-        throw UnsupportedOperationException()
-    }
-
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
-        this@ListFragment.container = oneVisibleChildLayout {
-
-            list = recyclerView {
-                layoutManager = LinearLayoutManager(ctx)
-                adapter = this@ListFragment.adapter
-            }
-            loader = progressBar()
-        }
-    }.view
-}
+//abstract class ListFragment<T, E, L : Logic, P : Presenter<in L, in V>, V : ListFragment<T, E, L, P, V, ItemView>, ItemView : View>(presenterClass: KClass<P>) : MvpFragment<L, P, V>(presenterClass, object:InjektMain(){
+//    override fun InjektRegistrar.registerInjectables() {
+//        throw UnsupportedOperationException()
+//    }
+//
+//}), PagingView<T, E> {
+//    lateinit var list: RecyclerView
+//    lateinit var loader: ProgressBar
+//    lateinit var container: OneVisibleChildLayout // CUR dataLayout
+//    protected abstract val adapter: SimpleListAdapter<T, ItemView>
+//
+//    override fun showLoading() = container.showChild(loader)
+//
+//    override fun showData(data: List<T>) {
+//        container.showChild(list)
+//        adapter.addData(data)
+//    }
+//
+//    override fun showNoData() {
+//        throw UnsupportedOperationException()
+//    }
+//
+//    override fun showError(error: E) {
+//        throw UnsupportedOperationException()
+//    }
+//
+//    override fun showLoadingNextPage() {
+//        throw UnsupportedOperationException()
+//    }
+//
+//    override fun showErrorNextPage() {
+//        throw UnsupportedOperationException()
+//    }
+//
+//    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? = UI {
+//        this@ListFragment.container = oneVisibleChildLayout {
+//
+//            list = recyclerView {
+//                layoutManager = LinearLayoutManager(ctx)
+//                adapter = this@ListFragment.adapter
+//            }
+//            loader = progressBar()
+//        }
+//    }.view
+//}

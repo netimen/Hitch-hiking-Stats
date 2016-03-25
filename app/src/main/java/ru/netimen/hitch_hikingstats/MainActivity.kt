@@ -135,11 +135,10 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment? = when (position) {
                 0 -> GoFragment()
-                1 -> RidesFragment()
-                2 -> CarsFragment()
-                else -> {
-                    CarsFragment()
-                }
+//                1 -> RidesFragment()
+//                2 -> CarsFragment()
+//                else ->                    CarsFragment()
+                else -> Fragment()
             }
 
 

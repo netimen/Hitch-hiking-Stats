@@ -15,6 +15,7 @@ import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4.onUiThread
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
+import ru.netimen.hitch_hikingstats.domain.StateRepo
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
 import ru.netimen.hitch_hikingstats.lib.typeRef
 import ru.netimen.hitch_hikingstats.presentation.GoLogic
@@ -24,6 +25,7 @@ import ru.netimen.hitch_hikingstats.presentation.LoadObservable
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.InjektMain
+import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
 import uy.kohesive.injekt.api.get
@@ -36,7 +38,7 @@ import uy.kohesive.injekt.api.get
  * Date:   03.03.16
  */
 
-class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(GoPresenter::class), GoView {
+class GoFragment : MvpFragment<GoLogic, GoPresenter, GoView>(GoView::class, GoInject()), GoView {
     private val ui = GoFragmentUI() // cur move to base class
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
@@ -62,15 +64,14 @@ class GoFragment : MvpFragment<GoLogic, GoPresenter, GoFragment>(GoPresenter::cl
     }
 
     override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
-
-    companion object : InjektMain() {
-        override fun InjektRegistrar.registerInjectables() {
-            addSingleton(fullType(), FirebaseStateRepo())
-            addSingleton(fullType(), GoPresenter(GoLogic(Injekt.get()), Injekt.get()))
-        }
-    }
 }
 
+class GoInject() : InjektModule {
+    override fun InjektRegistrar.registerInjectables() {
+        addSingleton(fullType<StateRepo>(), FirebaseStateRepo()) // CUR move to separate module
+        addSingleton(fullType(), GoPresenter(GoLogic(get()), get())) // CUR create Logic at another time
+    }
+}
 class GoFragmentUI : AnkoComponent<Fragment> {
     lateinit var car: EditText
     lateinit var ride: Button

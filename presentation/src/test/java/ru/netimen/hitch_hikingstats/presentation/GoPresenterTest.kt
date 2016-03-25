@@ -113,7 +113,7 @@ class GoPresenterTest {
 
     private fun createPresenter(state: GoState) {
         `when`(logic.loadState()).thenReturn(LoadObservable(Observable.just(state).wrapResult { ErrorInfo(it) }))
-        presenter = GoPresenter(view, logic)
+        presenter = GoPresenter(logic, view)
     }
 
     //    companion object {
