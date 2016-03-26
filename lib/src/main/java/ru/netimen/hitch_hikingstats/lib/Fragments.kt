@@ -2,23 +2,17 @@ package ru.netimen.hitch_hikingstats.lib
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
-import org.jetbrains.anko.progressBar
-import org.jetbrains.anko.recyclerview.v7.recyclerView
+import org.jetbrains.anko.AnkoComponent
 import org.jetbrains.anko.support.v4.UI
-import ru.netimen.hitch_hikingstats.presentation.Logic
 import ru.netimen.hitch_hikingstats.presentation.MvpView
-import ru.netimen.hitch_hikingstats.presentation.PagingView
 import ru.netimen.hitch_hikingstats.presentation.Presenter
 import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.InjektMain
-import uy.kohesive.injekt.api.*
-import uy.kohesive.injekt.registry.default.DefaultRegistrar
+import uy.kohesive.injekt.api.TypeReference
+import uy.kohesive.injekt.api.get
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -39,21 +33,26 @@ fun <T : Any> injectLazy(type: KClass<T>): Lazy<T> {
     return lazy { Injekt.get(forType = typeRef(type)) }
 }
 
-//abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(val presenterClass: KClass<P>, val presenterModule: InjektModule) : Fragment(), MvpView { // CUR fragment doesn't need presenter
-    abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView>(val presenterClass: KClass<V>, val presenterModule: InjektModule) : Fragment(), MvpView { // CUR fragment doesn't need presenter
-//        protected val presenter by injectLazy(type = presenterClass)
-//    val injectScope = InjektScope(DefaultRegistrar())
-    lateinit private var injectModule : InjektModule
+//abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(val presenterClass: KClass<P>, val presenterModule: InjektModule) : Fragment(), MvpView {
+//abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P,V,U>, U : AnkoComponent<Fragment>>(private val createPresenter:(V)->P,protected val ui: U, val presenterClass: KClass<V>, val presenterModule: InjektModule) : Fragment(), MvpView {
+abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P, V, U>, U : AnkoComponent<Fragment>>(private val createPresenter: (V) -> P, protected val ui: U) : Fragment(), MvpView {
+    //        protected val presenter by injectLazy(type = presenterClass)
+    //    val injectScope = InjektScope(DefaultRegistrar())
+    //    lateinit private var injectModule: InjektModule
+    private val presenter by lazy { createPresenter(this as V) }
+
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        injectModule = object : InjektScopedMain(InjektScope(DefaultRegistrar())) {
-            override fun InjektRegistrar.registerInjectables() {
-                addSingleton(typeRef(presenterClass), this@MvpFragment as V)
-                importModule(presenterModule)
-            }
-
-        }
+        presenter.toString() // creates the presenter actually
+        //        injectModule = object : InjektScopedMain(InjektScope(DefaultRegistrar())) {
+        //            override fun InjektRegistrar.registerInjectables() {
+        //                addSingleton(typeRef(presenterClass), this@MvpFragment as V)
+        //                importModule(presenterModule)
+        //            }
+        //
+        //        }
     }
 }
 
