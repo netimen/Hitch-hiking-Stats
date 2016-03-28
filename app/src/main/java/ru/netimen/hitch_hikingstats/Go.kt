@@ -1,23 +1,17 @@
 package ru.netimen.hitch_hikingstats
 
-import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RelativeLayout
 import com.jakewharton.rxbinding.view.clicks
 import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.*
-import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4.onUiThread
-import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
 import ru.netimen.hitch_hikingstats.domain.StateRepo
 import ru.netimen.hitch_hikingstats.lib.MvpFragment
-import ru.netimen.hitch_hikingstats.lib.typeRef
 import ru.netimen.hitch_hikingstats.presentation.GoLogic
 import ru.netimen.hitch_hikingstats.presentation.GoPresenter
 import ru.netimen.hitch_hikingstats.presentation.GoView
@@ -25,8 +19,6 @@ import ru.netimen.hitch_hikingstats.presentation.LoadObservable
 import ru.netimen.hitch_hikingstats.services.FirebaseStateRepo
 import ru.netimen.hitch_hikingstats.services.firebaseRef
 import rx.Observable
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.InjektMain
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.fullType
@@ -40,12 +32,9 @@ import uy.kohesive.injekt.api.get
  * Date:   03.03.16
  */
 
-class GoFragment : MvpFragment<GoLogic, GoPresenter, GoView>(GoView::class, GoInject()), GoView {
-    private val ui = GoFragmentUI() // cur move to base class
+class GoFragment : MvpFragment<GoPresenter, GoFragment, GoUI>(GoUI()), GoView {
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
-
-    override fun rideClicked() = ui.ride.clicks()
+    override fun rideClicked() = ui.ride.clicks() //CUR make one method: getIntentObservable(Intent)
 
     override fun stopClicked(): Observable<Unit> = ui.stop.clicks()
 
@@ -65,7 +54,8 @@ class GoFragment : MvpFragment<GoLogic, GoPresenter, GoView>(GoView::class, GoIn
         activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 
-    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
+    //    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(ui.ride.parent as View)
+    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(ui.ride.parent as View) // CUR move base class; LightCycle?
 }
 
 class GoInject() : InjektModule {
@@ -75,7 +65,10 @@ class GoInject() : InjektModule {
         addSingleton(fullType(), GoPresenter(GoLogic(get()), get())) // CUR create Logic at another time
     }
 }
-class GoFragmentUI : AnkoComponent<Fragment> {
+
+fun gi(): (GoView) -> GoPresenter = { GoPresenter() }
+
+class GoUI : AnkoComponent<Fragment> {
     lateinit var car: EditText
     lateinit var ride: Button
     lateinit var wait: Button
