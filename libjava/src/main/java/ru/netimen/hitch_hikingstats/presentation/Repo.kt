@@ -76,21 +76,22 @@ open class GetListUseCase<T, E, L : ListParams, R : Repo<T, E, L>>(repo: R, prot
     override fun useCaseObservable(): Observable<Result<List<T>, E>> = repo.getList(Repo.Query(listParams, page, perPage))
 }
 
-interface ValueRepo<T, E> {
+interface ValueRepo<T> {
 
-    fun get(): Observable<Result<T, E>>
+    //    fun get(): Observable<Result<T, E>>
+    fun get(): Observable<T>
 
-    fun set(t: T)
+    fun set(t: T): Observable<Unit>
 }
 
-abstract class ValueRepoUseCase<T, E, R : ValueRepo<*, E>>(protected val repo: R) : ResultUseCase<T, E>(SchedulingStrategy.ioMain())
-
-open class GetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
-
-    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
-}
-
-open class SetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
-
-    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
-}
+//abstract class ValueRepoUseCase<T, E, R : ValueRepo<*, E>>(protected val repo: R) : ResultUseCase<T, E>(SchedulingStrategy.ioMain())
+//
+//open class GetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
+//
+//    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
+//}
+//
+//open class SetValueUseCase<T, E, R : ValueRepo<T, E>>(repo: R) : ValueRepoUseCase<T, E, R>(repo) {
+//
+//    override fun useCaseObservable(): Observable<Result<T, E>> = repo.get()
+//}

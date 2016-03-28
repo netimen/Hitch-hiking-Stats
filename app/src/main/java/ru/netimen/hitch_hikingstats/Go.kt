@@ -22,6 +22,8 @@ import ru.netimen.hitch_hikingstats.presentation.GoLogic
 import ru.netimen.hitch_hikingstats.presentation.GoPresenter
 import ru.netimen.hitch_hikingstats.presentation.GoView
 import ru.netimen.hitch_hikingstats.presentation.LoadObservable
+import ru.netimen.hitch_hikingstats.services.FirebaseStateRepo
+import ru.netimen.hitch_hikingstats.services.firebaseRef
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.InjektMain
@@ -68,7 +70,8 @@ class GoFragment : MvpFragment<GoLogic, GoPresenter, GoView>(GoView::class, GoIn
 
 class GoInject() : InjektModule {
     override fun InjektRegistrar.registerInjectables() {
-        addSingleton(fullType<StateRepo>(), FirebaseStateRepo()) // CUR move to separate module
+//        addSingleton(fullType(), firebaseRef)
+        addSingleton(fullType<StateRepo>(), FirebaseStateRepo(firebaseRef)) // CUR move to separate module
         addSingleton(fullType(), GoPresenter(GoLogic(get()), get())) // CUR create Logic at another time
     }
 }

@@ -1,5 +1,6 @@
 package ru.netimen.hitch_hikingstats.presentation
 
+import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.GoState
 import ru.netimen.hitch_hikingstats.domain.StateRepo
 import rx.Observable
@@ -26,8 +27,8 @@ interface GoView : MvpView {
 }
 
 class GoLogic(private val stateRepo: StateRepo) : Logic {
-    fun loadState() = LoadObservable(stateRepo.get()) // CUR usecase?
-    fun saveState(state: GoState) = stateRepo.set(state)
+    fun loadState() = LoadObservable(stateRepo.get().wrapResult { ErrorInfo(it) }) // CUR usecase?
+    fun saveState(state: GoState) = stateRepo.set(state).subscribe()
 
     fun addRide(state: GoState) = TODO()
 }
