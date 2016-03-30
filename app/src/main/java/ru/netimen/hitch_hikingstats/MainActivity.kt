@@ -16,13 +16,13 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import com.trello.rxlifecycle.RxLifecycle
+import dagger.Component
+import dagger.Module
+import dagger.Provides
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
-import org.jetbrains.anko.support.v4.UI
-import org.jetbrains.anko.support.v4._DrawerLayout
-import org.jetbrains.anko.support.v4.drawerLayout
-import org.jetbrains.anko.support.v4.viewPager
+import org.jetbrains.anko.support.v4.*
 import ru.netimen.hitch_hikingstats.presentation.Logic
 import ru.netimen.hitch_hikingstats.presentation.MvpView
 import ru.netimen.hitch_hikingstats.presentation.Presenter
@@ -31,6 +31,7 @@ import rx.lang.kotlin.BehaviorSubject
 import rx.subscriptions.CompositeSubscription
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import javax.inject.Inject
 
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val tabsTitles = stringArray(R.array.trip_tabs)
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment? = when (position) {
-//                0 -> GoFragment()
+            //                0 -> GoFragment()
                 0 -> TestFragment()
             //                0 -> Router.showFragment(TestFragment())
             //                1 -> Router.showFragment(TestFragment())
@@ -175,27 +176,30 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 }
 
-// CUR: daggerLogicFactory
+// CUR: daggerLogicFactory: provide application component; view.showData not called
 var callCount = 0
 
-fun longOperation() = Log.e("AAAAA", "AAAAA long operation ${++callCount}")
+fun longOperation(): Int {
+    Log.e("AAAAA", "AAAAA long operation ${++callCount}")
+    return callCount
+}
 
-class TestLogic : Logic {
+class TestLogic @Inject constructor(val dependency: String) : Logic { // CUR unsubscribe
     private val allSubscriptions = CompositeSubscription()
 
-    val someUsecase = addCachedUsecase(Observable.fromCallable(::longOperation))
-    val dontStartUsecase by lazy { addCachedUsecase(Observable.fromCallable(::longOperation)) }
-
     protected fun <T> addCachedUsecase(useCase: Observable<T>) = BehaviorSubject<T>().apply { allSubscriptions.add(useCase.subscribe(this)) } as Observable<T>
+
+    val someUsecase = addCachedUsecase(Observable.fromCallable(::longOperation).map { "$dependency $it" })
+    val dontStartUsecase by lazy { addCachedUsecase(Observable.fromCallable(::longOperation)) }
 }
 
 interface TestView : MvpView {
-    fun showData()
+    fun showData(data: String)
 }
 
 class TestPresenter(logic: TestLogic, view: TestView) : Presenter<TestLogic, TestView>(logic, view) {
     init {
-        logic.someUsecase.subscribe { view.showData() }
+        logic.someUsecase.subscribe { view.showData(it) }
         logic.dontStartUsecase.subscribe()
     }
 }
@@ -209,9 +213,21 @@ class TestUI : AnkoComponent<Fragment> {
     }
 }
 
-class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>({ TestLogic() }, defaultPresenterFactory(), TestUI()), TestView {
+class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>({ DaggerTestComponent.builder().testModule(TestModule()).build().testLogic() }, defaultPresenterFactory(), TestUI()), TestView {
 
-    override fun showData() = ui.b.run { text = "bbbb" }
+    override fun showData(data: String) = onUiThread { ui.b.run { text = data } }
+}
+
+@Module
+class TestModule {
+
+    @Provides
+    fun provideDependency() = "depAAAAA"
+}
+
+@Component(modules = arrayOf(TestModule::class))
+interface TestComponent {
+    fun testLogic(): TestLogic
 }
 
 
