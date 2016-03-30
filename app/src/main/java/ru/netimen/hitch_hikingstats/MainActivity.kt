@@ -1,5 +1,6 @@
 package ru.netimen.hitch_hikingstats
 
+import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.TabLayout
 import android.support.v4.app.Fragment
@@ -7,15 +8,29 @@ import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.GravityCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
-import com.firebase.client.Firebase
+import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.navigationView
 import org.jetbrains.anko.design.tabLayout
+import org.jetbrains.anko.support.v4.UI
 import org.jetbrains.anko.support.v4._DrawerLayout
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.viewPager
+import ru.netimen.hitch_hikingstats.presentation.Logic
+import ru.netimen.hitch_hikingstats.presentation.MvpView
+import ru.netimen.hitch_hikingstats.presentation.Presenter
+import rx.Observable
+import rx.lang.kotlin.BehaviorSubject
+import rx.subscriptions.CompositeSubscription
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
@@ -38,32 +53,32 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     //CUR paginated loading
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
-//        ref.removeValue()
-//        val ridesRef = ref.child("rides")
-//        val trips = arrayOf("Big Trip", "Middle Trip", "Small Trip")
-//        val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
-//        val r = Random()
-//        val rides = ArrayList<Ride>()
-//        val repo: RidesRepo = FirebaseRidesRepo()
-//        val carsRepo: CarsRepo = FirebaseCarsRepo()
-//        async() {
-//            for (i in 1..4)
-//                repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
-//
-//            (trips + "").forEach { checkRepTrip(repo, rides, it) }
-//            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-//            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
-//
-//            Thread.sleep(2000)
-//            val rr = rides.removeAt(0)
-//            repo.remove(rr)
-//            Thread.sleep(2000)
-//
-//            checkRepTrip(repo, rides, "")
-//            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
-//            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
-//        }
+        //        val ref = Firebase("https://dazzling-heat-4079.firebaseio.com/")
+        //        ref.removeValue()
+        //        val ridesRef = ref.child("rides")
+        //        val trips = arrayOf("Big Trip", "Middle Trip", "Small Trip")
+        //        val cars = arrayOf("Toyota", "Ford", "Ferrari", "Opel", "Lada")
+        //        val r = Random()
+        //        val rides = ArrayList<Ride>()
+        //        val repo: RidesRepo = FirebaseRidesRepo()
+        //        val carsRepo: CarsRepo = FirebaseCarsRepo()
+        //        async() {
+        //            for (i in 1..4)
+        //                repo.addOrUpdate(Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
+        //
+        //            (trips + "").forEach { checkRepTrip(repo, rides, it) }
+        //            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+        //            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+        //
+        //            Thread.sleep(2000)
+        //            val rr = rides.removeAt(0)
+        //            repo.remove(rr)
+        //            Thread.sleep(2000)
+        //
+        //            checkRepTrip(repo, rides, "")
+        //            carsRepo.getList(Repo.Query(TripListParams(""))).subscribe({ error { "CARS: $it" } })
+        //            carsRepo.getList(Repo.Query(TripListParams(trips[1]))).subscribe({ error { "CARS: $it" } })
+        //        }
         //            addRide(ref, Ride(trips[r.nextInt(trips.size)], cars[r.nextInt(cars.size)], r.nextInt(100), 1 + r.nextInt(100)).apply { rides.add(this) })
         //
         //        removeRide(ref, rides[0])
@@ -98,24 +113,24 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        })
         /**
          */
-//        ridesRef.addChildEventListener(object : ChildEventListener {
-//            override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
-//            }
-//
-//            override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
-//            }
-//
-//            override fun onChildAdded(p0: DataSnapshot?, p1: String?) {
-//                error("CCC ${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
-//            }
-//
-//            override fun onChildRemoved(p0: DataSnapshot?) {
-//            }
-//
-//            override fun onCancelled(p0: FirebaseError?) {
-//            }
-//
-//        })
+        //        ridesRef.addChildEventListener(object : ChildEventListener {
+        //            override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
+        //            }
+        //
+        //            override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
+        //            }
+        //
+        //            override fun onChildAdded(p0: DataSnapshot?, p1: String?) {
+        //                error("CCC ${System.currentTimeMillis() - millis} ${(p0?.value as HashMap<*, *>).size}")
+        //            }
+        //
+        //            override fun onChildRemoved(p0: DataSnapshot?) {
+        //            }
+        //
+        //            override fun onCancelled(p0: FirebaseError?) {
+        //            }
+        //
+        //        })
         //        ridesRef.addValueEventListener(object : ValueEventListener {
         //            override fun onCancelled(p0: FirebaseError?) {
         //                throw UnsupportedOperationException()
@@ -132,10 +147,13 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val tabsTitles = stringArray(R.array.trip_tabs)
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment? = when (position) {
-                0 -> GoFragment()
-//                1 -> RidesFragment()
-//                2 -> CarsFragment()
-//                else ->                    CarsFragment()
+//                0 -> GoFragment()
+                0 -> TestFragment()
+            //                0 -> Router.showFragment(TestFragment())
+            //                1 -> Router.showFragment(TestFragment())
+            //                1 -> RidesFragment()
+            //                2 -> CarsFragment()
+            //                else ->                    CarsFragment()
                 else -> Fragment()
             }
 
@@ -147,13 +165,146 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         //        RxTextView.textChanges(ui.car).subscribe { Log.e("aaa", "aaa" + it) }
     }
 
-//    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
-//        repo.getList(Repo.Query(TripListParams(t)))
-//                .map { it.data!! }
-//                .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
-//                .subscribe { error { "AAAAA check trip: $t $it" } }
-//    }
+    //    private fun checkRepTrip(repo: RidesRepo, rides: ArrayList<Ride>, t: String) {
+    //        repo.getList(Repo.Query(TripListParams(t)))
+    //                .map { it.data!! }
+    //                .map { compareLists(it, rides.filter { it.sameTrip(t) }) }
+    //                .subscribe { error { "AAAAA check trip: $t $it" } }
+    //    }
 
+
+}
+
+// CUR: daggerLogicFactory
+var callCount = 0
+
+fun longOperation() = Log.e("AAAAA", "AAAAA long operation ${++callCount}")
+
+class TestLogic : Logic {
+    private val allSubscriptions = CompositeSubscription()
+
+    val someUsecase = addCachedUsecase(Observable.fromCallable(::longOperation))
+    val dontStartUsecase by lazy { addCachedUsecase(Observable.fromCallable(::longOperation)) }
+
+    protected fun <T> addCachedUsecase(useCase: Observable<T>) = BehaviorSubject<T>().apply { allSubscriptions.add(useCase.subscribe(this)) } as Observable<T>
+}
+
+interface TestView : MvpView {
+    fun showData()
+}
+
+class TestPresenter(logic: TestLogic, view: TestView) : Presenter<TestLogic, TestView>(logic, view) {
+    init {
+        logic.someUsecase.subscribe { view.showData() }
+        logic.dontStartUsecase.subscribe()
+    }
+}
+
+class TestUI : AnkoComponent<Fragment> {
+    lateinit var b: Button
+
+    override fun createView(ui: AnkoContext<Fragment>): View = with(ui) {
+        b = button("hello")
+        return b
+    }
+}
+
+class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>({ TestLogic() }, defaultPresenterFactory(), TestUI()), TestView {
+
+    override fun showData() = ui.b.run { text = "bbbb" }
+}
+
+
+interface Factories<L : Logic, P : Presenter<in L, in V>, V : MvpView> {
+    fun createLogic(): L
+    fun createPresenter(logic: L, view: V): P
+}
+
+class HasId {
+    var id: Int = -1
+}
+
+object LogicCache {
+    private val id = AtomicInteger()
+    private val logicMap = HashMap<Int, Logic>()
+
+    fun <L : Logic> get(hasId: HasId, logicFactory: () -> L): L {
+        if (hasId.id < 0) hasId.id = id.incrementAndGet()
+
+        return logicMap[hasId.id]?.let { it as L } ?: logicFactory().apply { logicMap[hasId.id] = this }
+    }
+
+    fun remove(hasId: HasId) {
+        logicMap.remove(hasId.id)
+    }
+}
+
+abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView, U : AnkoComponent<Fragment>>(private val logicFactory: () -> L, private val presenterFactory: (L, V) -> P, protected val ui: U) : Fragment(), MvpView {
+    private lateinit var logic: L
+    private var presenter: P? = null
+
+    private val hasId = HasId()
+    private var stateSaved = false
+
+    companion object {
+        val ARG_ID = "ARG_MVP_FRAGMENT_VIEW_ID"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        savedInstanceState?.getInt(ARG_ID)?.let { hasId.id = it }
+        logic = LogicCache.get(hasId, logicFactory)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+        outState?.putInt(ARG_ID, hasId.id)
+        stateSaved = true
+    }
+
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        presenter = presenterFactory(logic, this as V)
+    }
+
+    override fun onDestroyView() {
+        presenter = null
+        if (!stateSaved)
+            LogicCache.remove(hasId)
+        super.onDestroyView()
+    }
+
+    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(view as View)
+}
+
+inline fun <reified L : Logic, reified P : Presenter<in L, in V>, reified V : MvpView> defaultPresenterFactory(): (L, V) -> P = { logic, view -> P::class.java.constructors[0].newInstance(logic, view) as P }
+
+//object Router {
+//    private val stack = Stack<Logic>()
+//    fun get() = stack.last()
+//    fun showFragment(fragment: Fragment): Fragment {
+//        stack.push(TestLogic())
+//        return fragment
+//    }
+//
+//    inline fun <reified T> getLogic(): T {
+//        //        return stack.last() as T
+//        return get() as T
+//    }
+//
+//}
+
+class TestViewImpl(context: Context) : FrameLayout(context) {
+
+}
+
+class TestUI2 : AnkoComponent<ViewGroup> {
+
+    override fun createView(ui: AnkoContext<ViewGroup>): View = with(ui) {
+        button("hahahaha")
+    }
 
 }
 
