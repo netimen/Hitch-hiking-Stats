@@ -1,8 +1,14 @@
 package ru.netimen.hitch_hikingstats.test
 
-import android.app.Fragment
-import uy.kohesive.injekt.injectLazy
-import kotlin.reflect.KClass
+import android.content.Context
+import dagger.Component
+import dagger.Module
+import dagger.Provides
+import ru.netimen.hitch_hikingstats.DaggerTestComponent
+import ru.netimen.hitch_hikingstats.TestLogic
+import ru.netimen.hitch_hikingstats.presentation.Logic
+import javax.inject.Scope
+import javax.inject.Singleton
 
 /**
  * Copyright (c) 2016 Bookmate.
@@ -13,13 +19,54 @@ import kotlin.reflect.KClass
  */
 
 
-interface Presenter
-class IP : Presenter
-fun test() {
-    val i = IP::class
-    i.java
-    val ccc = IP::class.java
-}
+//@Module
+//class TestModule2(private val context: Context) {
+//    @Singleton
+//    @Provides
+//    fun provideContext2() = context
+//
+//    @Provides
+//    fun provideDependencyInt() = 13
+//
+//    @Singleton
+//    @Provides
+//    fun provideDependencyS() = "depAAAAA"
+//}
+//
+//@Singleton
+//@Component(modules = arrayOf(TestModule2::class))
+//interface TestAppComponent2 {
+//    fun depInt(): String
+//
+//    companion object {
+//        private var instance: TestAppComponent2? = null
+//        fun get(context: Context) = instance?: DaggerTestAppComponent2.builder().testModule2(TestModule2(context)).build().apply { instance = this }
+//    }
+//}
+//
+//interface LogicComponent<L : Logic> {
+//    fun logic(): L
+//}
+//
+//@PerScreen
+//@Component(dependencies = arrayOf(TestAppComponent2::class))
+//interface TestActivityComponent : LogicComponent<TestLogic>
+//
+////fun daggerLogicFactory() = DaggerTestComponent.builder().testAppComponent2(TestAppComponent2.instance).build().logic()
+//
+//fun cc(c: Context) = { TestLogic(c.toString()) }
+//val cccc = ::cc
+//fun test(t: (Context) -> () -> TestLogic) = 1
+//fun test2() = test(::cc)
+//
+
+//interface Presenter
+//class IP : Presenter
+//fun test() {
+//    val i = IP::class
+//    i.java
+//    val ccc = IP::class.java
+//}
 
 
 //abstract class MvpFragment<P : Presenter>(presenterClass: KClass<P>) : Fragment() {

@@ -176,7 +176,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
 }
 
-// CUR: daggerLogicFactory: provide application component; view.showData not called
+// CUR:  view.showData not called; remove defaultPresenterFactory
 var callCount = 0
 
 fun longOperation(): Int {
@@ -213,10 +213,12 @@ class TestUI : AnkoComponent<Fragment> {
     }
 }
 
-class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>({ DaggerTestComponent.builder().testModule(TestModule()).build().testLogic() }, defaultPresenterFactory(), TestUI()), TestView {
+class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>(::testLogicFactory, ::defaultPresenterFactory<TestLogic, TestPresenter, TestView>, TestUI()), TestView {
 
     override fun showData(data: String) = onUiThread { ui.b.run { text = data } }
 }
+
+private fun testLogicFactory(context: Context) = DaggerTestComponent.builder().testModule(TestModule()).build().testLogic() // CUR move to TestComponent as static method?
 
 @Module
 class TestModule {
@@ -225,7 +227,8 @@ class TestModule {
     fun provideDependency() = "depAAAAA"
 }
 
-@Component(modules = arrayOf(TestModule::class))
+@PerScreen
+@Component(modules = arrayOf(TestModule::class), dependencies = arrayOf(AppComponent::class))
 interface TestComponent {
     fun testLogic(): TestLogic
 }
@@ -255,8 +258,8 @@ object LogicCache {
     }
 }
 
-abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView, U : AnkoComponent<Fragment>>(private val logicFactory: () -> L, private val presenterFactory: (L, V) -> P, protected val ui: U) : Fragment(), MvpView {
-    private lateinit var logic: L
+abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView, U : AnkoComponent<Fragment>>(private val logicFactory: (Context) -> L, private val presenterFactory: (L, V) -> P, protected val ui: U) : Fragment(), MvpView {
+    private lateinit var logic: L // CUR move this to some delegate so MvpActivity would be easy to create
     private var presenter: P? = null
 
     private val hasId = HasId()
@@ -269,7 +272,7 @@ abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView, U 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         savedInstanceState?.getInt(ARG_ID)?.let { hasId.id = it }
-        logic = LogicCache.get(hasId, logicFactory)
+        logic = LogicCache.get(hasId, { logicFactory(activity) })
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -295,7 +298,8 @@ abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpView, U 
     override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(view as View)
 }
 
-inline fun <reified L : Logic, reified P : Presenter<in L, in V>, reified V : MvpView> defaultPresenterFactory(): (L, V) -> P = { logic, view -> P::class.java.constructors[0].newInstance(logic, view) as P }
+//inline fun <reified L : Logic, reified P : Presenter<in L, in V>, reified V : MvpView> defaultPresenterFactory(): (L, V) -> P = { logic, view -> P::class.java.constructors[0].newInstance(logic, view) as P }
+inline fun <reified L : Logic, reified P : Presenter<in L, in V>, reified V : MvpView> defaultPresenterFactory(logic: L, view: V) = P::class.java.constructors[0].newInstance(logic, view) as P
 
 //object Router {
 //    private val stack = Stack<Logic>()

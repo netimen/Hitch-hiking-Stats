@@ -21,6 +21,7 @@ import ru.netimen.hitch_hikingstats.presentation.GoPresenter
 import ru.netimen.hitch_hikingstats.presentation.GoView
 import ru.netimen.hitch_hikingstats.services.FirebaseStateRepo
 import ru.netimen.hitch_hikingstats.services.firebaseRef
+import ru.netimen.hitch_hikingstats.test.PerScreen
 import rx.Observable
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -44,7 +45,7 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment, GoUI>(GoUI()), GoView {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        DaggerGoComponent.builder().mainModule(MainModule(activity.applicationContext as App)).goViewModule(GoViewModule(this)).build().inject(this)
+        DaggerGoComponent.builder().appComponent(AppComponentHolder.get(activity).component).goViewModule(GoViewModule(this)).build().inject(this)
     }
 
     override fun rideClicked() = ui.ride.clicks() //CUR make one method: getIntentObservable(Intent)
@@ -69,16 +70,9 @@ class GoFragment : MvpFragment<GoPresenter, GoFragment, GoUI>(GoUI()), GoView {
 }
 
 @Module
-class ReposModule {
-    @Provides
-    @Singleton
-    fun provideRepo(firebase: Firebase): StateRepo = FirebaseStateRepo(firebase)
-}
-
-@Module
 class GoModule {
     @Provides
-    @Singleton
+    @PerScreen
     fun provideLogic(repo: StateRepo) = GoLogic(repo)
 }
 
@@ -88,8 +82,8 @@ class GoViewModule(private val view: GoView) {
     fun providePresenter(logic: GoLogic) = GoPresenter(logic, view)
 }
 
-@Singleton
-@Component(modules = arrayOf(MainModule::class, ReposModule::class, GoModule::class, GoViewModule::class))
+@PerScreen
+@Component(modules = arrayOf(GoModule::class, GoViewModule::class), dependencies = arrayOf(AppComponent::class))
 interface GoComponent {
     fun inject(fragment: GoFragment)
 }
