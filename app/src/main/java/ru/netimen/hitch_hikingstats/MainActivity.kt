@@ -177,6 +177,8 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 }
 
 // CUR:  view.showData not called; remove defaultPresenterFactory
+// CUR: TODAY: move factories to Component, pass data from intent to logic, logicconfig, how to show new screen from presenter and pass data?
+// CUR: modules: lib, lib-android
 var callCount = 0
 
 fun longOperation(): Int {
@@ -231,7 +233,11 @@ class TestModule {
 @Component(modules = arrayOf(TestModule::class), dependencies = arrayOf(AppComponent::class))
 interface TestComponent {
     fun testLogic(): TestLogic
+
+//    companion object Factory :
 }
+
+
 
 
 interface Factories<L : Logic, P : Presenter<in L, in V>, V : MvpView> {
