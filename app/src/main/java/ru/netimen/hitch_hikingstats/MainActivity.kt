@@ -26,6 +26,7 @@ import org.jetbrains.anko.support.v4.*
 import ru.netimen.hitch_hikingstats.presentation.Logic
 import ru.netimen.hitch_hikingstats.presentation.MvpView
 import ru.netimen.hitch_hikingstats.presentation.Presenter
+import ru.netimen.hitch_hikingstats.test.RideListFragment
 import rx.Observable
 import rx.lang.kotlin.BehaviorSubject
 import rx.subscriptions.CompositeSubscription
@@ -149,7 +150,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment? = when (position) {
             //                0 -> GoFragment()
-                0 -> TestFragment()
+                0 -> RideListFragment()
             //                0 -> Router.showFragment(TestFragment())
             //                1 -> Router.showFragment(TestFragment())
             //                1 -> RidesFragment()
@@ -215,10 +216,10 @@ class TestUI : AnkoComponent<Fragment> {
     }
 }
 
-class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>(::testLogicFactory, ::defaultPresenterFactory<TestLogic, TestPresenter, TestView>, TestUI()), TestView {
-
-    override fun showData(data: String) = onUiThread { ui.b.run { text = data } }
-}
+//class TestFragment : MvpFragment<TestLogic, TestPresenter, TestView, TestUI>(::testLogicFactory, ::defaultPresenterFactory<TestLogic, TestPresenter, TestView>, TestUI()), TestView {
+//
+//    override fun showData(data: String) = onUiThread { ui.b.run { text = data } }
+//}
 
 private fun testLogicFactory(context: Context) = DaggerTestComponent.builder().testModule(TestModule()).build().testLogic() // CUR move to TestComponent as static method?
 

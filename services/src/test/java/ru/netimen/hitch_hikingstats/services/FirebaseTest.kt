@@ -18,6 +18,25 @@ class FirebaseRepoTest { // CUR test what happens on error; test this func, test
     val firebase: Firebase = mock()
     val repo = object : FirebaseRepo(firebase) {}
 
+    interface A {
+        fun a() : Int
+    }
+//    class AImpl : A {
+//        override fun a() = 0
+//    }
+
+    interface B : A
+    class BImpl : B {
+        override fun a() = 1
+    }
+
+    interface C : A
+    class CImpl : C {
+        override fun a() = 2
+    }
+
+    class D(val b: B, val c: C) : B by b, C
+
     @Test
     fun testLoadDataOnce() {
         repo.loadDataOnce(firebase) {

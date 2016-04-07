@@ -42,7 +42,7 @@ interface AppComponentHolder : ComponentHolder<AppComponent> {
 }
 
 class App : Application(), AppComponentHolder {
-    override val component by lazy { DaggerProductionAppComponent.builder().contextModule(ContextModule(this)).firebaseModule(FirebaseModule()).reposModule(ReposModule()).build() }
+    override val component by lazy { DaggerProductionAppComponent.builder().contextModule(ContextModule(this)).firebaseReposModule(FirebaseReposModule()).build() }
 }
 
 @Module
@@ -55,11 +55,10 @@ class FirebaseModule {
         Firebase.getDefaultConfig().isPersistenceEnabled = true
         return firebaseRef
     }
-
 }
 
-@Module
-class ReposModule {
+@Module(includes = arrayOf(FirebaseModule::class))
+class FirebaseReposModule {
 
     @Provides
     @Singleton
@@ -71,6 +70,6 @@ interface AppComponent {
 }
 
 @Singleton
-@Component(modules = arrayOf(ContextModule::class, FirebaseModule::class, ReposModule::class))
+@Component(modules = arrayOf(ContextModule::class, FirebaseReposModule::class))
 interface ProductionAppComponent : AppComponent {
 }
