@@ -33,9 +33,10 @@ interface Input
 interface Output
 
 interface Block<I, M, In : Input, Out : Output> {
+    fun initialIntent() : I
     fun createIntentProcessor(): (I) -> Observable<M>
-    fun intent(input: In): Observable<I>
-    fun output(model: M, output: Out)
+    fun parseInput(input: In): Observable<I>
+    fun outputModel(model: M, output: Out)
 }
 
 class HasId {
@@ -57,10 +58,10 @@ object PipeCache {
     }
 }
 
-class IntentPipe<I, M> private constructor(processIntent: (I) -> Observable<M>, private val hasId: HasId) {
+class IntentPipe<I, M> private constructor(initialIntent: I, processIntent: (I) -> Observable<M>, private val hasId: HasId) {
     val intent = PublishSubject<I>()
     val model = BehaviorSubject<M>()
-    private val subscription = intent.flatMap(processIntent).subscribe(model) // CUR initial intent here
+    private val subscription = intent.startWith(initialIntent).flatMap(processIntent).subscribe(model)
 
     fun destroy() {
         subscription.unsubscribe()
@@ -68,22 +69,22 @@ class IntentPipe<I, M> private constructor(processIntent: (I) -> Observable<M>, 
     }
 
     companion object {
-        fun <I, M> get(processIntent: (I) -> Observable<M>, hasId: HasId) = PipeCache.get(hasId, { IntentPipe(processIntent, it) })
+        fun <I, M> get(initialIntent : I, processIntent: (I) -> Observable<M>, hasId: HasId) = PipeCache.get(hasId, { IntentPipe(initialIntent, processIntent, it) })
     }
 }
 
 class InputOutputPipe<I, M, In : Input, Out : Output, B : Block<I, M, In, Out>>(private val block: B, private val hasId: HasId) {
-    private val intentPipe = IntentPipe.get(block.createIntentProcessor(), hasId)
+    private val intentPipe = IntentPipe.get(block.initialIntent(), block.createIntentProcessor(), hasId)
 
     fun setup(input: In, output: Out, takeUntil: Observable<Unit>) {
-        block.intent(input).takeUntil(takeUntil).subscribe(intentPipe.intent)
-        intentPipe.model.takeUntil(takeUntil).subscribe { block.output(it, output) } // CUR handle unexpected errors
+        block.parseInput(input).takeUntil(takeUntil).subscribe(intentPipe.intent)
+        intentPipe.model.takeUntil(takeUntil).subscribe { block.outputModel(it, output) } // CUR handle unexpected errors
     }
 
     fun onBlockDestroyed() = intentPipe.destroy()
 }
 
-abstract class BlockFragment<I, M, In : Input, Out : Output, B : Block<I, M, In, Out>, U : AnkoComponent<Fragment>>(private val block: B, private val ui: U) : Fragment() { // CUR remove I, M, force fragment implement In, Out?
+abstract class BlockFragment<I, M, In : Input, Out : Output, B : Block<I, M, In, Out>, U : AnkoComponent<Fragment>>(private val block: B, val ui: U) : Fragment() { // CUR remove I, M, force fragment implement In, Out?
     private val hasId = HasId()
     private var stateSaved = false
     private lateinit var pipe: InputOutputPipe<I, M, In, Out, B>
@@ -118,6 +119,10 @@ abstract class BlockFragment<I, M, In : Input, Out : Output, B : Block<I, M, In,
     }
 }
 
+interface ShowBlock<A> {
+    fun show(args: A)
+}
+
 interface RidesListInput : Input {
     fun reloadClicked(): Observable<Unit>
     fun rideClicked(): Observable<Int> // CUR may be not INT but Ride here?
@@ -125,12 +130,11 @@ interface RidesListInput : Input {
     //    fun scrolledToNextPage(): Observable<Unit>
 }
 
-interface RideListOutput : Output {
+interface RideListOutput : Output, ShowBlock<RideDetailsArgs> {
     fun showProgress()
     fun showData(data: List<Ride>)
     fun showEmpty()
     fun showError(error: ErrorInfo)
-    fun showRideDetails(args: RideDetailsArgs)
 }
 
 sealed class RidesListIntent {
@@ -155,14 +159,16 @@ class RideListIntentProcessor(val load: Observable<List<Ride>>) : Function1<Ride
 }
 
 class RideListBlock : Block<RidesListIntent, RidesListModel, RidesListInput, RideListOutput> {
+    override fun initialIntent(): RidesListIntent = throw UnsupportedOperationException()
+
     override fun createIntentProcessor(): (RidesListIntent) -> Observable<RidesListModel> = RideListIntentProcessor(load)
 
-    override fun intent(input: RidesListInput): Observable<RidesListIntent> = input.reloadClicked().map { RidesListIntent.Load() as RidesListIntent } // cur more elegant syntax here
+    override fun parseInput(input: RidesListInput): Observable<RidesListIntent> = input.reloadClicked().map { RidesListIntent.Load() as RidesListIntent } // cur more elegant syntax here
 //            .mergeWith(input.rideClicked().map { RidesListIntent.ShowRideDetails(it) })
 //            .mergeWith(input.rideSwiped().map { RidesListIntent.DeleteRides(arrayOf(it)) })
             .startWith(RidesListIntent.Load()) // CUR separate input2intent and first intent
 
-    override fun output(model: RidesListModel, output: RideListOutput) = when (model) {
+    override fun outputModel(model: RidesListModel, output: RideListOutput) = when (model) {
         is RidesListModel.Data -> TODO()
         is RidesListModel.Loading -> output.showProgress()
         is RidesListModel.Error -> TODO()
@@ -185,7 +191,7 @@ class RideListFragment : BlockFragment<RidesListIntent, RidesListModel, RidesLis
 
     override fun showError(error: ErrorInfo): Unit = throw UnsupportedOperationException()
 
-    override fun showRideDetails(args: RideDetailsArgs): Unit = throw UnsupportedOperationException()
+    override fun show(args: RideDetailsArgs): Unit = throw UnsupportedOperationException()
 }
 
 class RideListUi : AnkoComponent<Fragment> {

@@ -149,8 +149,8 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val tabsTitles = stringArray(R.array.trip_tabs)
         ui.pager.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment? = when (position) {
-            //                0 -> GoFragment()
-                0 -> RideListFragment()
+                            0 -> GoFragment()
+//                0 -> RideListFragment()
             //                0 -> Router.showFragment(TestFragment())
             //                1 -> Router.showFragment(TestFragment())
             //                1 -> RidesFragment()

@@ -31,19 +31,24 @@ class ContextModule(private val context: Context) {
     fun provideContext() = context
 }
 
-interface ComponentHolder<C> { // CUR move to lib
-    val component: C
-}
+//interface ComponentHolder<C> { // CUR move to lib
+//    val component: C
+//}
+//
+//interface AppComponentHolder : ComponentHolder<AppComponent> {
+//    companion object {
+//        fun get(context: Context) = context.applicationContext as AppComponentHolder
+//    }
+//}
 
-interface AppComponentHolder : ComponentHolder<AppComponent> {
-    companion object {
-        fun get(context: Context) = context.applicationContext as AppComponentHolder
+class App : Application() {
+    init {
+        AppComponent.instance = DaggerProductionAppComponent.builder().contextModule(ContextModule(this)).reposModule(ReposModule()).build()
     }
 }
-
-class App : Application(), AppComponentHolder {
-    override val component by lazy { DaggerProductionAppComponent.builder().contextModule(ContextModule(this)).firebaseReposModule(FirebaseReposModule()).build() }
-}
+//class App : Application(), AppComponentHolder {
+//    override val component by lazy { DaggerProductionAppComponent.builder().contextModule(ContextModule(this)).reposModule(ReposModule()).build() }
+//}
 
 @Module
 class FirebaseModule {
@@ -58,7 +63,7 @@ class FirebaseModule {
 }
 
 @Module(includes = arrayOf(FirebaseModule::class))
-class FirebaseReposModule {
+class ReposModule {
 
     @Provides
     @Singleton
@@ -67,9 +72,13 @@ class FirebaseReposModule {
 
 interface AppComponent {
     fun stateRepo(): StateRepo
+
+    companion object {
+        lateinit var instance: AppComponent
+    }
 }
 
 @Singleton
-@Component(modules = arrayOf(ContextModule::class, FirebaseReposModule::class))
+@Component(modules = arrayOf(ContextModule::class, ReposModule::class))
 interface ProductionAppComponent : AppComponent {
 }
