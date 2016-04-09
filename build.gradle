@@ -37,34 +37,35 @@ ext.versions = [ // http://stackoverflow.com/a/9547593/190148
 ]
 
 ext.deps = [
-        dagger              : 'com.google.dagger:dagger:' + versions.dagger
-//        , daggerApt            : 'com.google.dagger:dagger-compiler:' + versions.dagger
-//        , jsr250               : 'javax.annotation:jsr250-api:1.0'
+        dagger                  : 'com.google.dagger:dagger:' + versions.dagger
+        , daggerApt             : 'com.google.dagger:dagger-compiler:' + versions.dagger
+//        , daggerJsr250          : 'javax.annotation:jsr250-api:1.0'
+        , daggerJavaxAnnotation: 'org.glassfish:javax.annotation:10.0-b28'
 //
-        , rxKotlin          : 'io.reactivex:rxkotlin:0.55.0'
+        , rxKotlin              : 'io.reactivex:rxkotlin:0.55.0'
 //        , rxJava               : 'io.reactivex:rxjava:1.1.1'
-        , rxAndroid         : 'io.reactivex:rxandroid:1.1.0'
-        , rxBinding         : 'com.jakewharton.rxbinding:rxbinding-kotlin:' + versions.rxBinding
+        , rxAndroid             : 'io.reactivex:rxandroid:1.1.0'
+        , rxBinding             : 'com.jakewharton.rxbinding:rxbinding-kotlin:' + versions.rxBinding
 //        , rxBindingV4          : 'com.jakewharton.rxbinding:rxbinding-support-v4:' + versions.rxBinding
 //        , rxBindingRecycler    : 'com.jakewharton.rxbinding:rxbinding-recyclerview-v7:' + versions.rxBinding
-        , rxLifecycle       : 'com.trello:rxlifecycle-kotlin:0.5.0'// + versions.rxLifecycle
+        , rxLifecycle           : 'com.trello:rxlifecycle-kotlin:0.5.0'// + versions.rxLifecycle
 //        , rxLifecycleComponents: 'com.trello:rxlifecycle-components:' + versions.rxLifecycle
 //        , rxPreferences        : 'com.f2prateek.rx.preferences:rx-preferences:1.0.1'
 
-        , kotlin            : 'org.jetbrains.kotlin:kotlin-stdlib:' + versions.kotlin
-        , kotlinAndroid     : 'org.jetbrains.kotlin:kotlin-android-extensions:' + versions.kotlin
-        , kotlinPlugin      : 'org.jetbrains.kotlin:kotlin-gradle-plugin:' + versions.kotlin
+        , kotlin                : 'org.jetbrains.kotlin:kotlin-stdlib:' + versions.kotlin
+        , kotlinAndroid         : 'org.jetbrains.kotlin:kotlin-android-extensions:' + versions.kotlin
+        , kotlinPlugin          : 'org.jetbrains.kotlin:kotlin-gradle-plugin:' + versions.kotlin
 
-        , injekt            : 'uy.kohesive.injekt:injekt-core:1.14.1'
+        , injekt                : 'uy.kohesive.injekt:injekt-core:1.14.1'
 
-        , anko              : 'org.jetbrains.anko:anko-sdk21:' + versions.anko
-        , ankoV4            : 'org.jetbrains.anko:anko-support-v4:' + versions.anko
-        , ankoDesign        : 'org.jetbrains.anko:anko-design:' + versions.anko
-        , ankoRecycler      : 'org.jetbrains.anko:anko-recyclerview-v7:' + versions.anko
+        , anko                  : 'org.jetbrains.anko:anko-sdk21:' + versions.anko
+        , ankoV4                : 'org.jetbrains.anko:anko-support-v4:' + versions.anko
+        , ankoDesign            : 'org.jetbrains.anko:anko-design:' + versions.anko
+        , ankoRecycler          : 'org.jetbrains.anko:anko-recyclerview-v7:' + versions.anko
 
-        , supportDesign     : 'com.android.support:design:' + versions.support
+        , supportDesign         : 'com.android.support:design:' + versions.support
 //        , firebase     : 'com.firebase:firebase-client-android:2.5.0'
-        , firebase          : 'com.soikonomakis:rxfirebase:1.0.0'
+        , firebase              : 'com.soikonomakis:rxfirebase:1.0.0'
 
 //        , fragmentArgs      : 'com.hannesdorfmann.fragmentargs:annotation:' + versions.fragmentArgs
 //        , fragmentArgsApt   : 'com.hannesdorfmann.fragmentargs:processor:' + versions.fragmentArgs
@@ -83,9 +84,9 @@ ext.deps = [
 //        , leakCanary        : 'com.squareup.leakcanary:leakcanary-android:' + versions.leakCanary
 //        , leakCanaryNoOp    : 'com.squareup.leakcanary:leakcanary-android-no-op:' + versions.leakCanary
 //        , scalpel           : 'com.jakewharton.scalpel:scalpel:1.1.2'
-        , testJUnit         : 'junit:junit:4.12'
-        , testMockito       : 'com.nhaarman:mockito-kotlin:0.3.0'
-        , testHamcrest      : 'com.natpryce:hamkrest:1.1.0.0'
-        , testEspresso      : "com.android.support.test.espresso:espresso-core:$versions.espresso"
-        , testEspressoRunner: "com.android.support.test:runner:0.5"
+        , testJUnit             : 'junit:junit:4.12'
+        , testMockito           : 'com.nhaarman:mockito-kotlin:0.3.0'
+        , testHamcrest          : 'com.natpryce:hamkrest:1.1.0.0'
+        , testEspresso          : "com.android.support.test.espresso:espresso-core:$versions.espresso"
+        , testEspressoRunner    : "com.android.support.test:runner:0.5"
 ]

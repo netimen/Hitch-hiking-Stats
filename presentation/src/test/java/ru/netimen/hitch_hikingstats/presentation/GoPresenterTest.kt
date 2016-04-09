@@ -112,7 +112,7 @@ class GoPresenterTest {
 
 
     private fun createPresenter(state: GoState) {
-        `when`(logic.loadState()).thenReturn(LoadObservable(Observable.just(state).wrapResult { ErrorInfo(it) }))
+        `when`(logic.loadState()).thenReturn(LoadObservable(Observable.just(state).wrapResult { ErrorInfo(it) })) // CUR is it possible to mock final loadState?
         presenter = GoPresenter(logic, view)
     }
 

@@ -1,4 +1,4 @@
-package ru.netimen.hitch_hikingstats
+package ru.netimen.hitch_hikingstats.services
 
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.Ride

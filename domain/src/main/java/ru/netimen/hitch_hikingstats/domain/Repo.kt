@@ -24,4 +24,5 @@ interface RidesRepo : IdRepo<Ride>
 
 interface CarsRepo : HitchRepo<Car>
 
-interface StateRepo: ValueRepo<GoState, ErrorInfo>
+//interface StateRepo: ValueRepo<GoState, ErrorInfo>
+interface StateRepo: ValueRepo<GoState>

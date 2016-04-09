@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.trello.rxlifecycle.RxLifecycle
 import org.jetbrains.anko.AnkoComponent
 import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.presentation.MvpView
@@ -35,17 +36,18 @@ fun <T : Any> injectLazy(type: KClass<T>): Lazy<T> {
 
 //abstract class MvpFragment<L : Logic, P : Presenter<in L, in V>, V : MvpFragment<L, P, V>>(val presenterClass: KClass<P>, val presenterModule: InjektModule) : Fragment(), MvpView {
 //abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P,V,U>, U : AnkoComponent<Fragment>>(private val createPresenter:(V)->P,protected val ui: U, val presenterClass: KClass<V>, val presenterModule: InjektModule) : Fragment(), MvpView {
-abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P, V, U>, U : AnkoComponent<Fragment>>(private val createPresenter: (V) -> P, protected val ui: U) : Fragment(), MvpView {
+//abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P, V, U>, U : AnkoComponent<Fragment>>(private val createPresenter: (V) -> P, protected val ui: U) : Fragment(), MvpView {
+    abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P, V, U>, U : AnkoComponent<Fragment>>(protected val ui: U) : Fragment(), MvpView {
     //        protected val presenter by injectLazy(type = presenterClass)
     //    val injectScope = InjektScope(DefaultRegistrar())
     //    lateinit private var injectModule: InjektModule
-    private val presenter by lazy { createPresenter(this as V) }
+//    private val presenter by lazy { createPresenter(this as V) }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?) = ui.createView(UI {})
 
-    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        presenter.toString() // creates the presenter actually
+//    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+//        super.onViewCreated(view, savedInstanceState)
+//        presenter.toString() // triggers the creation of presenter
         //        injectModule = object : InjektScopedMain(InjektScope(DefaultRegistrar())) {
         //            override fun InjektRegistrar.registerInjectables() {
         //                addSingleton(typeRef(presenterClass), this@MvpFragment as V)
@@ -53,7 +55,9 @@ abstract class MvpFragment<P : Presenter<*, in V>, V : MvpFragment<P, V, U>, U :
         //            }
         //
         //        }
-    }
+//    }
+
+    override fun <T> bindToLifecycle() = RxLifecycle.bindView<T>(view as View)
 }
 
 class ViewHolder<V : View>(itemView: V) : RecyclerView.ViewHolder(itemView) {

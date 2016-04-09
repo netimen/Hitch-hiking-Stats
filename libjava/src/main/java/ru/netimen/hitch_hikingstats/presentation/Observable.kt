@@ -40,7 +40,7 @@ fun <T, E, O : ResultObservable<T, E>> O.onData(onData: (T) -> Unit) = branch({ 
 fun <T, E, O : ResultObservable<T, E>> O.onError(onError: (E) -> Unit) = branch({ it is Result.Failure<T, E> }, onError, { (it as Result.Failure<T, E>).error })
 
 
-open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable)
+open class LoadObservable<T, E>(observable: Observable<Result<T, E>>) : ResultObservable<T, E>(observable) // CUR rx builder http://www.slideshare.net/AvitoTech/kotlin-rx-android-avito
 
 // these should be extension functions to support chaining and inheritance: http://stackoverflow.com/a/35432682/190148
 fun <T, E, O : LoadObservable<T, E>> O.onNoData(noDataPredicate: (T) -> Boolean, onNoData: () -> Unit) = branch({ if (it is Result.Success<T, E>) !noDataPredicate(it.data) else false}, { onNoData() }, {})

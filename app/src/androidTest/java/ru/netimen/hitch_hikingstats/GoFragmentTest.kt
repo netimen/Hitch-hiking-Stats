@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 private inline fun <reified T : Fragment> getFragmentByClass(activity: AppCompatActivity) = activity.supportFragmentManager.fragments.find { it is T } as T
 
 @RunWith(AndroidJUnit4::class)
-class GoFragmentTest {
+class GoFragmentTest { // CUR integration & functional tests
     @get:Rule
     val activityRule = ActivityTestRule(MainActivity::class.java)
 
@@ -40,7 +40,7 @@ class GoFragmentTest {
 
     @Test
     fun testStateDisplayed() {
-        fragment.showState(GoState.Idle())
+        fragment.showState(GoState.Idle()) // CUR make a method here
         waitButton().check(matches(isDisplayed()));
         rideButton().check(matches(isDisplayed()));
         stopButton().check(matches(not(isDisplayed())));
