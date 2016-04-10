@@ -28,7 +28,7 @@ class FirebaseRepoTest { // CUR test what happens on error; test this func, test
         intent
                 .flatMap {
                     when (it) {
-                        2 -> Observable.interval(1, TimeUnit.SECONDS).map { "sec$it" }.takeUntil
+                        2 -> Observable.interval(1, TimeUnit.SECONDS).map { "sec$it" }.takeUntil(intent)
 //                        2 -> Observable.just("a")
                     //        updateTitleSubscription = Observable.interval(1, TimeUnit.MINUTES).bindToLifecycle().subscribe { view.updateTitle(state) }
                         else -> Observable.error<String>(NullPointerException("aaaa")).onErrorReturn { "cccc" }

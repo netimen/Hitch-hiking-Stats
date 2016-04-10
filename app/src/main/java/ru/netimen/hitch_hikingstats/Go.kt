@@ -20,6 +20,8 @@ import ru.netimen.hitch_hikingstats.test.BlockFragment
 import ru.netimen.hitch_hikingstats.test.Input
 import ru.netimen.hitch_hikingstats.test.Output
 import rx.Observable
+import rx.lang.kotlin.PublishSubject
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -64,27 +66,29 @@ sealed class GoModel {
 }
 
 class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val setUsecase: SetStateUsecase) : Function1<GoIntent, Observable<GoModel>> {
-    lateinit var state: GoState
+    private lateinit var state: GoState
+    private val stopUpdateTitle = PublishSubject<Unit>()
 
     override fun invoke(intent: GoIntent): Observable<GoModel> = when (intent) {
-        is GoIntent.Load -> getUseCase.execute().map {
+        is GoIntent.Load -> getUseCase.execute().flatMap {
             when (it) { // CUR easier error handling
-                is Result2.Success -> stateModel(it.data, save = false)
-                is Result2.Failure -> GoModel.Error(ErrorInfo(it.error))
+                is Result2.Success -> changeState(it.data, save = false)
+                is Result2.Failure -> Observable.just(GoModel.Error(ErrorInfo(it.error)))
             }
         }
-        is GoIntent.Wait -> Observable.just(stateModel(GoState.Waiting()))
-        is GoIntent.Ride -> Observable.just(stateModel(GoState.Riding(intent.carName, state.lengthMinutes)))
-        is GoIntent.Stop -> Observable.just(stateModel(GoState.Idle()))
+        is GoIntent.Wait -> changeState(GoState.Waiting())
+        is GoIntent.Ride -> changeState(GoState.Riding(intent.carName, state.lengthMinutes))
+        is GoIntent.Stop -> changeState(GoState.Idle()) // CUR addRide
     }
 
-    //        updateTitleSubscription = Observable.interval(1, TimeUnit.MINUTES).bindToLifecycle().subscribe { view.updateTitle(state) }
-    private fun stateModel(newState: GoState, save: Boolean = true): GoModel.Data {
+    private fun changeState(newState: GoState, save: Boolean = true): Observable<GoModel> {
         state = newState
         if (save)
             setUsecase.execute(state).subscribe()
 
-        return GoModel.Data(state)
+        stopUpdateTitle.onNext(Unit)
+        if (state is GoState.Idle) return Observable.just(GoModel.Data(state))
+        return Observable.interval(1, TimeUnit.MINUTES).map { GoModel.Title(state) as GoModel }.takeUntil(stopUpdateTitle).startWith(GoModel.Data(state))
     }
 }
 
