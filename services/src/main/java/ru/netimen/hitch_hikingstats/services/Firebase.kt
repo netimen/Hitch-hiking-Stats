@@ -2,9 +2,9 @@ package ru.netimen.hitch_hikingstats.services
 
 import com.firebase.client.*
 import com.soikonomakis.rxfirebase.RxFirebase
-import ru.netimen.hitch_hikingstats.domain.GoState
-import ru.netimen.hitch_hikingstats.domain.Ride
-import ru.netimen.hitch_hikingstats.domain.StateRepo
+import ru.netimen.hitch_hikingstats.domain.*
+import ru.netimen.hitch_hikingstats.presentation.Repo
+import ru.netimen.hitch_hikingstats.presentation.Result
 import rx.Observable
 import java.util.*
 
@@ -213,6 +213,24 @@ class FirebaseStateRepo(firebase: Firebase) : FirebaseRepo(firebase), StateRepo 
     override fun set(t: GoState) = Observable.just(stateChild().setValue(t))
 
     private fun stateChild() = firebase.child("state")
+}
+
+class FirebaseRidesRepo(firebase: Firebase) : FirebaseRepo(firebase), RidesRepo {
+    override fun getList(query: Repo.Query<TripListParams>): Observable<Result<List<Ride>, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun get(id: String): Observable<Result<Ride, ErrorInfo>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun addOrUpdate(t: Ride) {
+        throw UnsupportedOperationException()
+    }
+
+    override fun remove(t: Ride) {
+        throw UnsupportedOperationException()
+    }
 }
 
 private val URL = "https://dazzling-heat-4079.firebaseio.com/" // cUr support "/test" as main ref

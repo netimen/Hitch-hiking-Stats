@@ -33,10 +33,10 @@ interface Input
 interface Output
 
 interface Block<I, M, In : Input, Out : Output> {
-    fun initialIntent() : I
+    fun initialIntent(): I
     fun createIntentProcessor(): (I) -> Observable<M>
     fun parseInput(input: In): Observable<I>
-    fun outputModel(model: M, output: Out)
+    fun outputModel(model: M, output: Out, takeUntil: Observable<Unit>)
 }
 
 class HasId {
@@ -60,7 +60,7 @@ object PipeCache {
 
 class IntentPipe<I, M> private constructor(initialIntent: I, processIntent: (I) -> Observable<M>, private val hasId: HasId) {
     val intent = PublishSubject<I>()
-    val model = BehaviorSubject<M>()
+    val model = BehaviorSubject<M>() // cur relays?
     private val subscription = intent.startWith(initialIntent).flatMap(processIntent).subscribe(model)
 
     fun destroy() {
@@ -69,7 +69,7 @@ class IntentPipe<I, M> private constructor(initialIntent: I, processIntent: (I) 
     }
 
     companion object {
-        fun <I, M> get(initialIntent : I, processIntent: (I) -> Observable<M>, hasId: HasId) = PipeCache.get(hasId, { IntentPipe(initialIntent, processIntent, it) })
+        fun <I, M> get(initialIntent: I, processIntent: (I) -> Observable<M>, hasId: HasId) = PipeCache.get(hasId, { IntentPipe(initialIntent, processIntent, it) })
     }
 }
 
@@ -78,7 +78,7 @@ class InputOutputPipe<I, M, In : Input, Out : Output, B : Block<I, M, In, Out>>(
 
     fun setup(input: In, output: Out, takeUntil: Observable<Unit>) {
         block.parseInput(input).takeUntil(takeUntil).subscribe(intentPipe.intent)
-        intentPipe.model.takeUntil(takeUntil).subscribe { block.outputModel(it, output) } // CUR handle unexpected errors
+        intentPipe.model.takeUntil(takeUntil).subscribe { block.outputModel(it, output, takeUntil) } // CUR handle unexpected errors
     }
 
     fun onBlockDestroyed() = intentPipe.destroy()
@@ -164,11 +164,11 @@ class RideListBlock : Block<RidesListIntent, RidesListModel, RidesListInput, Rid
     override fun createIntentProcessor(): (RidesListIntent) -> Observable<RidesListModel> = RideListIntentProcessor(load)
 
     override fun parseInput(input: RidesListInput): Observable<RidesListIntent> = input.reloadClicked().map { RidesListIntent.Load() as RidesListIntent } // cur more elegant syntax here
-//            .mergeWith(input.rideClicked().map { RidesListIntent.ShowRideDetails(it) })
-//            .mergeWith(input.rideSwiped().map { RidesListIntent.DeleteRides(arrayOf(it)) })
+            //            .mergeWith(input.rideClicked().map { RidesListIntent.ShowRideDetails(it) })
+            //            .mergeWith(input.rideSwiped().map { RidesListIntent.DeleteRides(arrayOf(it)) })
             .startWith(RidesListIntent.Load()) // CUR separate input2intent and first intent
 
-    override fun outputModel(model: RidesListModel, output: RideListOutput) = when (model) {
+    override fun outputModel(model: RidesListModel, output: RideListOutput, takeUntil: Observable<Unit>) = when (model) {
         is RidesListModel.Data -> TODO()
         is RidesListModel.Loading -> output.showProgress()
         is RidesListModel.Error -> TODO()

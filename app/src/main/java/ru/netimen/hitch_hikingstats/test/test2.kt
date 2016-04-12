@@ -2,8 +2,8 @@ package ru.netimen.hitch_hikingstats.test
 
 import android.util.Log
 import ru.netimen.hitch_hikingstats.domain.Ride
-import java.util.*
 import rx.Observable
+import java.util.*
 
 /**
  * Copyright (c) 2016 Bookmate.

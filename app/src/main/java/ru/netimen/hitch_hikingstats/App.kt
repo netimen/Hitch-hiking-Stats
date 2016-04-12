@@ -6,7 +6,9 @@ import com.firebase.client.Firebase
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import ru.netimen.hitch_hikingstats.domain.RidesRepo
 import ru.netimen.hitch_hikingstats.domain.StateRepo
+import ru.netimen.hitch_hikingstats.services.FirebaseRidesRepo
 import ru.netimen.hitch_hikingstats.services.FirebaseStateRepo
 import ru.netimen.hitch_hikingstats.services.firebaseRef
 import javax.inject.Scope
@@ -68,6 +70,10 @@ class ReposModule {
     @Provides
     @Singleton
     fun provideStateRepo(firebase: Firebase): StateRepo = FirebaseStateRepo(firebase)
+
+    @Provides
+    @Singleton
+    fun provideRidesRepo(firebase: Firebase): RidesRepo = FirebaseRidesRepo(firebase)
 }
 
 interface AppComponent {

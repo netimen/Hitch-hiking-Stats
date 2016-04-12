@@ -9,18 +9,15 @@ import com.jakewharton.rxbinding.view.clicks
 import dagger.Component
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.onUiThread
-import ru.netimen.hitch_hikingstats.domain.ErrorInfo
-import ru.netimen.hitch_hikingstats.domain.GoState
-import ru.netimen.hitch_hikingstats.domain.StateRepo
-import ru.netimen.hitch_hikingstats.presentation.*
-import ru.netimen.hitch_hikingstats.services.FirebaseStateRepo
-import ru.netimen.hitch_hikingstats.services.firebaseRef
+import ru.netimen.hitch_hikingstats.domain.*
+import ru.netimen.hitch_hikingstats.presentation.Result2
+import ru.netimen.hitch_hikingstats.presentation.wrapResult2
 import ru.netimen.hitch_hikingstats.test.Block
 import ru.netimen.hitch_hikingstats.test.BlockFragment
 import ru.netimen.hitch_hikingstats.test.Input
 import ru.netimen.hitch_hikingstats.test.Output
 import rx.Observable
-import rx.lang.kotlin.PublishSubject
+import rx.Subscription
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -38,6 +35,14 @@ class GetStateUsecase @Inject constructor(val repo: StateRepo) {
 
 class SetStateUsecase @Inject constructor(val repo: StateRepo) {
     fun execute(state: GoState) = repo.set(state)
+}
+
+class AddRideUsecase @Inject constructor(val repo: RidesRepo) {
+    fun execute(state: GoState) = when (state) {
+        is GoState.Waiting -> repo.addOrUpdate(Ride("", state.lengthMinutes))
+        is GoState.Riding -> repo.addOrUpdate(Ride("", state.carName, state.waitMinutes, state.lengthMinutes))
+        else -> Unit
+    }
 }
 
 interface GoInput : Input {
@@ -59,15 +64,20 @@ sealed class GoIntent {
     class Stop : GoIntent()
 }
 
+sealed class DataErrorModel<out T, out E> { //TODO waiting for type aliases
+    class Data<T, E>(val data: T) : DataErrorModel<T, E>()
+    class Error<T, E>(val error: E) : DataErrorModel<T, E>()
+}
+
 sealed class GoModel {
+    //CUR DataErrorModel
     class Data(val state: GoState) : GoModel()
-    class Title(val state: GoState) : GoModel()
+
     class Error(val errorInfo: ErrorInfo) : GoModel()
 }
 
-class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val setUsecase: SetStateUsecase) : Function1<GoIntent, Observable<GoModel>> {
+class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val setUsecase: SetStateUsecase, val addRideUsecase: AddRideUsecase) : Function1<GoIntent, Observable<GoModel>> {
     private lateinit var state: GoState
-    private val stopUpdateTitle = PublishSubject<Unit>()
 
     override fun invoke(intent: GoIntent): Observable<GoModel> = when (intent) {
         is GoIntent.Load -> getUseCase.execute().flatMap {
@@ -78,7 +88,10 @@ class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val
         }
         is GoIntent.Wait -> changeState(GoState.Waiting())
         is GoIntent.Ride -> changeState(GoState.Riding(intent.carName, state.lengthMinutes))
-        is GoIntent.Stop -> changeState(GoState.Idle()) // CUR addRide
+        is GoIntent.Stop -> {
+            addRideUsecase.execute(state)
+            changeState(GoState.Idle())
+        }
     }
 
     private fun changeState(newState: GoState, save: Boolean = true): Observable<GoModel> {
@@ -86,9 +99,7 @@ class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val
         if (save)
             setUsecase.execute(state).subscribe()
 
-        stopUpdateTitle.onNext(Unit)
-        if (state is GoState.Idle) return Observable.just(GoModel.Data(state))
-        return Observable.interval(1, TimeUnit.MINUTES).map { GoModel.Title(state) as GoModel }.takeUntil(stopUpdateTitle).startWith(GoModel.Data(state))
+        return Observable.just(GoModel.Data(state))
     }
 }
 
@@ -99,6 +110,7 @@ interface GoComponent {
 }
 
 class GoBlock : Block<GoIntent, GoModel, GoInput, GoOutput> {
+    //CUR make output a delegate
     override fun initialIntent() = GoIntent.Load()
 
     override fun createIntentProcessor(): (GoIntent) -> Observable<GoModel> = DaggerGoComponent.builder().appComponent(AppComponent.instance).build().intentProcessor()
@@ -107,10 +119,19 @@ class GoBlock : Block<GoIntent, GoModel, GoInput, GoOutput> {
             .mergeWith(input.rideClicked().map { GoIntent.Ride("Toyo") })
             .mergeWith(input.stopClicked().map { GoIntent.Stop() })
 
-    override fun outputModel(model: GoModel, output: GoOutput) = when (model) {
-        is GoModel.Data -> output.showState(model.state)
-        is GoModel.Title -> output.updateTitle(model.state)
+    override fun outputModel(model: GoModel, output: GoOutput, takeUntil: Observable<Unit>) = when (model) {
+        is GoModel.Data -> onNewState(model, output, takeUntil)
         is GoModel.Error -> TODO()
+    }
+
+    private var titleSubscription: Subscription? = null
+
+    private fun onNewState(model: GoModel.Data, output: GoOutput, takeUntil: Observable<Unit>) {
+        output.showState(model.state)
+
+        titleSubscription = titleSubscription?.let { it.unsubscribe(); null }
+        if (model.state !is GoState.Idle)
+            titleSubscription = Observable.interval(1, TimeUnit.MINUTES).takeUntil(takeUntil).subscribe { output.updateTitle(model.state) } // cur display correct state age
     }
 }
 
@@ -244,7 +265,7 @@ class GoFragment : BlockFragment<GoIntent, GoModel, GoInput, GoOutput, GoBlock, 
 //    }
 //}
 
-fun gi(): (GoView) -> GoPresenter = { GoPresenter(GoLogic(FirebaseStateRepo(firebaseRef)), it) }
+//fun gi(): (GoView) -> GoPresenter = { GoPresenter(GoLogic(FirebaseStateRepo(firebaseRef)), it) }
 
 class GoUI : AnkoComponent<Fragment> {
     lateinit var car: EditText
