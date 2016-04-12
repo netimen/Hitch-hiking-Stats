@@ -13,6 +13,7 @@ import org.jetbrains.anko.support.v4.UI
 import ru.netimen.hitch_hikingstats.HasId
 import ru.netimen.hitch_hikingstats.domain.ErrorInfo
 import ru.netimen.hitch_hikingstats.domain.Ride
+import ru.netimen.hitch_hikingstats.presentation.Result2
 import rx.Observable
 import rx.lang.kotlin.BehaviorSubject
 import rx.lang.kotlin.PublishSubject
@@ -116,6 +117,18 @@ abstract class BlockFragment<I, M, In : Input, Out : Output, B : Block<I, M, In,
         if (!stateSaved)
             pipe.onBlockDestroyed()
         super.onDestroyView()
+    }
+}
+
+sealed class DataErrorModel<T> { //TODO waiting for type aliases
+    class Data<T>(val data: T) : DataErrorModel<T>()
+    class Error<T>(val error: ErrorInfo) : DataErrorModel<T>()
+
+    companion object {
+        fun<T> fromResult(result: Result2<T>, doWithData: (T) -> Unit = {}): DataErrorModel<T> = when (result) {
+            is Result2.Success -> DataErrorModel.Data(result.data.apply(doWithData))
+            is Result2.Failure -> DataErrorModel.Error(ErrorInfo(result.error))
+        }
     }
 }
 

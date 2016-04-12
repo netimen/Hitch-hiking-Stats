@@ -78,6 +78,7 @@ class ReposModule {
 
 interface AppComponent {
     fun stateRepo(): StateRepo
+    fun ridesRepo(): RidesRepo
 
     companion object {
         lateinit var instance: AppComponent

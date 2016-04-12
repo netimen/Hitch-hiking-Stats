@@ -9,13 +9,12 @@ import com.jakewharton.rxbinding.view.clicks
 import dagger.Component
 import org.jetbrains.anko.*
 import org.jetbrains.anko.support.v4.onUiThread
-import ru.netimen.hitch_hikingstats.domain.*
-import ru.netimen.hitch_hikingstats.presentation.Result2
+import ru.netimen.hitch_hikingstats.domain.GoState
+import ru.netimen.hitch_hikingstats.domain.Ride
+import ru.netimen.hitch_hikingstats.domain.RidesRepo
+import ru.netimen.hitch_hikingstats.domain.StateRepo
 import ru.netimen.hitch_hikingstats.presentation.wrapResult2
-import ru.netimen.hitch_hikingstats.test.Block
-import ru.netimen.hitch_hikingstats.test.BlockFragment
-import ru.netimen.hitch_hikingstats.test.Input
-import ru.netimen.hitch_hikingstats.test.Output
+import ru.netimen.hitch_hikingstats.test.*
 import rx.Observable
 import rx.Subscription
 import java.util.concurrent.TimeUnit
@@ -64,42 +63,23 @@ sealed class GoIntent {
     class Stop : GoIntent()
 }
 
-sealed class DataErrorModel<out T, out E> { //TODO waiting for type aliases
-    class Data<T, E>(val data: T) : DataErrorModel<T, E>()
-    class Error<T, E>(val error: E) : DataErrorModel<T, E>()
-}
-
-sealed class GoModel {
-    //CUR DataErrorModel
-    class Data(val state: GoState) : GoModel()
-
-    class Error(val errorInfo: ErrorInfo) : GoModel()
-}
-
-class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val setUsecase: SetStateUsecase, val addRideUsecase: AddRideUsecase) : Function1<GoIntent, Observable<GoModel>> {
+class GoIntentProcessor @Inject constructor(val getUseCase: GetStateUsecase, val setUsecase: SetStateUsecase, val addRideUsecase: AddRideUsecase) : Function1<GoIntent, Observable<DataErrorModel<GoState>>> {
     private lateinit var state: GoState
 
-    override fun invoke(intent: GoIntent): Observable<GoModel> = when (intent) {
-        is GoIntent.Load -> getUseCase.execute().flatMap {
-            when (it) { // CUR easier error handling
-                is Result2.Success -> changeState(it.data, save = false)
-                is Result2.Failure -> Observable.just(GoModel.Error(ErrorInfo(it.error)))
-            }
-        }
-        is GoIntent.Wait -> changeState(GoState.Waiting())
-        is GoIntent.Ride -> changeState(GoState.Riding(intent.carName, state.lengthMinutes))
+    override fun invoke(intent: GoIntent): Observable<DataErrorModel<GoState>> = when (intent) {
+        is GoIntent.Load -> getUseCase.execute().map { DataErrorModel.fromResult(it) { newState -> state = newState } }
+        is GoIntent.Wait -> Observable.just(changeState(GoState.Waiting()))
+        is GoIntent.Ride -> Observable.just(changeState(GoState.Riding(intent.carName, state.lengthMinutes)))
         is GoIntent.Stop -> {
             addRideUsecase.execute(state)
-            changeState(GoState.Idle())
+            Observable.just(changeState(GoState.Idle()))
         }
     }
 
-    private fun changeState(newState: GoState, save: Boolean = true): Observable<GoModel> {
+    private fun changeState(newState: GoState): DataErrorModel<GoState> {
         state = newState
-        if (save)
-            setUsecase.execute(state).subscribe()
-
-        return Observable.just(GoModel.Data(state))
+        setUsecase.execute(state).subscribe()
+        return DataErrorModel.Data(state)
     }
 }
 
@@ -109,33 +89,33 @@ interface GoComponent {
     fun intentProcessor(): GoIntentProcessor
 }
 
-class GoBlock : Block<GoIntent, GoModel, GoInput, GoOutput> {
+class GoBlock : Block<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput> {
     //CUR make output a delegate
     override fun initialIntent() = GoIntent.Load()
 
-    override fun createIntentProcessor(): (GoIntent) -> Observable<GoModel> = DaggerGoComponent.builder().appComponent(AppComponent.instance).build().intentProcessor()
+    override fun createIntentProcessor(): (GoIntent) -> Observable<DataErrorModel<GoState>> = DaggerGoComponent.builder().appComponent(AppComponent.instance).build().intentProcessor()
 
     override fun parseInput(input: GoInput): Observable<GoIntent> = input.waitClicked().map { GoIntent.Wait() as GoIntent }
             .mergeWith(input.rideClicked().map { GoIntent.Ride("Toyo") })
             .mergeWith(input.stopClicked().map { GoIntent.Stop() })
 
-    override fun outputModel(model: GoModel, output: GoOutput, takeUntil: Observable<Unit>) = when (model) {
-        is GoModel.Data -> onNewState(model, output, takeUntil)
-        is GoModel.Error -> TODO()
+    override fun outputModel(model: DataErrorModel<GoState>, output: GoOutput, takeUntil: Observable<Unit>) = when (model) {
+        is DataErrorModel.Data -> onNewState(model, output, takeUntil)
+        is DataErrorModel.Error -> TODO()
     }
 
     private var titleSubscription: Subscription? = null
 
-    private fun onNewState(model: GoModel.Data, output: GoOutput, takeUntil: Observable<Unit>) {
-        output.showState(model.state)
+    private fun onNewState(model: DataErrorModel.Data<GoState>, output: GoOutput, takeUntil: Observable<Unit>) {
+        output.showState(model.data)
 
         titleSubscription = titleSubscription?.let { it.unsubscribe(); null }
-        if (model.state !is GoState.Idle)
-            titleSubscription = Observable.interval(1, TimeUnit.MINUTES).takeUntil(takeUntil).subscribe { output.updateTitle(model.state) } // cur display correct state age
+        if (model.data !is GoState.Idle)
+            titleSubscription = Observable.interval(1, TimeUnit.MINUTES).takeUntil(takeUntil).subscribe { output.updateTitle(model.data) } // cur display correct state age
     }
 }
 
-class GoFragment : BlockFragment<GoIntent, GoModel, GoInput, GoOutput, GoBlock, GoUI>(GoBlock(), GoUI()), GoInput, GoOutput {
+class GoFragment : BlockFragment<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput, GoBlock, GoUI>(GoBlock(), GoUI()), GoInput, GoOutput {
 
     override fun rideClicked() = ui.ride.clicks()
 
@@ -157,6 +137,12 @@ class GoFragment : BlockFragment<GoIntent, GoModel, GoInput, GoOutput, GoBlock, 
         activity.title = getString(ui.getSateCaption(state)) + if (state.lengthMinutes > 0) " ${state.lengthMinutes} " + getString(R.string.min) else "" // CUR never displays 0 min
     }
 }
+//sealed class GoModel {
+//    class Data(val state: GoState) : GoModel()
+//
+//    class Error(val errorInfo: ErrorInfo) : GoModel()
+//}
+
 //class GoLogic(private val stateRepo: StateRepo) : Logic {
 //    fun loadState() = LoadObservable(stateRepo.get().wrapResult { ErrorInfo(it) })
 //    fun saveState(state: GoState) = stateRepo.set(state).subscribe()
