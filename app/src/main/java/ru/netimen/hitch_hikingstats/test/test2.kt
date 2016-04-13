@@ -25,3 +25,22 @@ class RideRepo {
 
 val load = RideRepo().getRides()
 
+interface A {
+    fun a(): Int
+}
+
+class AImpl : A {
+    override fun a(): Int = 0
+}
+
+interface B {
+    fun a(): Int
+    fun b(): Int
+}
+
+class C(val a: AImpl) : B, A by a {
+    override fun b(): Int {
+        throw UnsupportedOperationException()
+    }
+
+}

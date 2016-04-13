@@ -7,6 +7,16 @@
  */
 package ru.netimen.hitch_hikingstats.test;
 
+//public class TestJ extends S {
+//
+//    private TestJ() {
+//        super();
+//    }
+//
+//    public static void test(){
+//        final int val = SKt.testS(new TestJ());
+//    }
+//}
 //public class test {
 ////    public Integer a;
 //    public Integer getItem() {return 0;}

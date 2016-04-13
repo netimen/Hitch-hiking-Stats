@@ -144,8 +144,8 @@ interface RidesListInput : Input {
 }
 
 interface RideListOutput : Output, ShowBlock<RideDetailsArgs> {
-    fun showProgress()
-    fun showData(data: List<Ride>)
+    fun showProgress()// cur https://github.com/juanchosaravia/KedditBySteps/blob/master/app/src/main/java/com/droidcba/kedditbysteps/commons/InfiniteScrollListener.kt#L36
+    fun showData(data: List<Ride>) // cur http://hannesdorfmann.com/android/adapter-delegates
     fun showEmpty()
     fun showError(error: ErrorInfo)
 }

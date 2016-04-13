@@ -89,22 +89,17 @@ interface GoComponent {
     fun intentProcessor(): GoIntentProcessor
 }
 
-class GoBlock : Block<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput> {
-    //CUR make output a delegate
-    override fun initialIntent() = GoIntent.Load()
+interface GoPresenter {
+    fun outputModel(model: DataErrorModel<GoState>, output: GoOutput, takeUntil: Observable<Unit>)
+}
 
-    override fun createIntentProcessor(): (GoIntent) -> Observable<DataErrorModel<GoState>> = DaggerGoComponent.builder().appComponent(AppComponent.instance).build().intentProcessor()
-
-    override fun parseInput(input: GoInput): Observable<GoIntent> = input.waitClicked().map { GoIntent.Wait() as GoIntent }
-            .mergeWith(input.rideClicked().map { GoIntent.Ride("Toyo") })
-            .mergeWith(input.stopClicked().map { GoIntent.Stop() })
+class GoPresenterImpl : GoPresenter {
+    private var titleSubscription: Subscription? = null
 
     override fun outputModel(model: DataErrorModel<GoState>, output: GoOutput, takeUntil: Observable<Unit>) = when (model) {
         is DataErrorModel.Data -> onNewState(model, output, takeUntil)
         is DataErrorModel.Error -> TODO()
     }
-
-    private var titleSubscription: Subscription? = null
 
     private fun onNewState(model: DataErrorModel.Data<GoState>, output: GoOutput, takeUntil: Observable<Unit>) {
         output.showState(model.data)
@@ -115,7 +110,17 @@ class GoBlock : Block<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput> {
     }
 }
 
-class GoFragment : BlockFragment<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput, GoBlock, GoUI>(GoBlock(), GoUI()), GoInput, GoOutput {
+class GoBlock(presenter: GoPresenter) : Block<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput>, GoPresenter by presenter {
+    override fun initialIntent() = GoIntent.Load()
+
+    override fun createIntentProcessor(): (GoIntent) -> Observable<DataErrorModel<GoState>> = DaggerGoComponent.builder().appComponent(AppComponent.instance).build().intentProcessor()
+
+    override fun parseInput(input: GoInput): Observable<GoIntent> = input.waitClicked().map { GoIntent.Wait() as GoIntent }
+            .mergeWith(input.rideClicked().map { GoIntent.Ride("Toyo") })
+            .mergeWith(input.stopClicked().map { GoIntent.Stop() })
+}
+
+class GoFragment : BlockFragment<GoIntent, DataErrorModel<GoState>, GoInput, GoOutput, GoBlock, GoUI>(GoBlock(GoPresenterImpl()), GoUI()), GoInput, GoOutput {
 
     override fun rideClicked() = ui.ride.clicks()
 
@@ -147,7 +152,7 @@ class GoFragment : BlockFragment<GoIntent, DataErrorModel<GoState>, GoInput, GoO
 //    fun loadState() = LoadObservable(stateRepo.get().wrapResult { ErrorInfo(it) })
 //    fun saveState(state: GoState) = stateRepo.set(state).subscribe()
 //
-//    fun addRide(state: GoState) = TODO()
+//    fun addRide(state: GoState) =
 //}
 //
 //class GoPresenter(logic: GoLogic, view: GoView) : Presenter<GoLogic, GoView>(logic, view) {
